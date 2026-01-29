@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sessions | CHICKEN TWIN - AI-Powered Poultry Robotics</title>
+    <link rel="icon" type="image/x-icon" href="fav.ico">
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar scrolled">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="fav.ico" alt="Chicken Twin Logo" class="logo-icon">
+                <span class="logo-text">CHICKEN TWIN</span>
+            </a>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="demo.html" class="nav-link">Demo</a></li>
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="sessions.html" class="nav-link active">Sessions</a></li>
+                <li><a href="analytics.html" class="nav-link">Analytics</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="hero-glow"></div>
+        <div class="container">
+            <div class="page-header-content">
+                <span class="section-tag">Session History</span>
+                <h1 class="page-title">Recorded Sessions</h1>
+                <p class="page-subtitle">Watch smooth video playback of all your past monitoring sessions</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sessions Content -->
+    <section class="sessions-section">
+        <div class="container">
+            <!-- Sessions Header -->
+            <div class="sessions-header">
+                <div class="sessions-count">
+                    <span id="sessionCount">0</span> Sessions Recorded
+                </div>
+                <button class="btn btn-secondary btn-sm" id="refreshSessions">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+
+            <!-- Sessions Grid -->
+            <div class="sessions-grid" id="sessionsGrid">
+                <!-- Sessions populated dynamically -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">📹</div>
+                <h3>No Sessions Recorded</h3>
+                <p>Start a monitoring session in the Demo page to begin recording.</p>
+                <a href="demo.html" class="btn btn-primary">Start Recording</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Playback Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal playback-modal">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h2 id="modalTitle">Session Playback</h2>
+                    <span class="modal-subtitle" id="modalSubtitle"></span>
+                </div>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Video Playback Area -->
+                <div class="playback-main">
+                    <!-- 3D Replay -->
+                    <div class="playback-video-container">
+                        <div class="video-label">🎮 3D Farm View (Recorded Camera Movement)</div>
+                        <div class="video-canvas-wrapper">
+                            <canvas id="replay3DCanvas"></canvas>
+                            <div class="video-overlay" id="videoOverlay">
+                                <div class="play-big-btn" id="playBigBtn">
+                                    <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="video-time-display" id="videoTimeDisplay">00:00 / 00:00</div>
+                        </div>
+                    </div>
+
+                    <!-- AI Vision Replay -->
+                    <div class="playback-video-container">
+                        <div class="video-label">🤖 AI Vision View (Keypoint Detection)</div>
+                        <div class="video-canvas-wrapper">
+                            <canvas id="replayThermalCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="playback-controls-bar">
+                    <!-- Progress Bar -->
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar">
+                            <div class="progress-fill" id="progressFill"></div>
+                            <div class="progress-handle" id="progressHandle"></div>
+                        </div>
+                        <div class="progress-timestamps">
+                            <span id="currentTimeLabel">00:00</span>
+                            <span id="totalTimeLabel">00:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="playback-buttons">
+                        <button class="control-btn" id="skipBackBtn" title="Skip Back 5s">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="11 19 2 12 11 5 11 19"></polygon>
+                                <polygon points="22 19 13 12 22 5 22 19"></polygon>
+                            </svg>
+                        </button>
+                        <button class="control-btn" id="prevFrameBtn" title="Previous Frame">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                                <line x1="5" y1="19" x2="5" y2="5"></line>
+                            </svg>
+                        </button>
+                        <button class="control-btn play-pause-btn" id="playPauseBtn" title="Play/Pause">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="playIcon">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="pauseIcon"
+                                style="display:none;">
+                                <rect x="6" y="4" width="4" height="16"></rect>
+                                <rect x="14" y="4" width="4" height="16"></rect>
+                            </svg>
+                        </button>
+                        <button class="control-btn" id="nextFrameBtn" title="Next Frame">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                                <line x1="19" y1="5" x2="19" y2="19"></line>
+                            </svg>
+                        </button>
+                        <button class="control-btn" id="skipForwardBtn" title="Skip Forward 5s">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="13 19 22 12 13 5 13 19"></polygon>
+                                <polygon points="2 19 11 12 2 5 2 19"></polygon>
+                            </svg>
+                        </button>
+
+                        <div class="control-divider"></div>
+
+                        <div class="speed-control">
+                            <label>Speed:</label>
+                            <select id="speedSelect">
+                                <option value="0.25">0.25x</option>
+                                <option value="0.5">0.5x</option>
+                                <option value="1" selected>1x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2x</option>
+                                <option value="4">4x</option>
+                            </select>
+                        </div>
+
+                        <div class="frame-counter">
+                            Frame: <span id="frameCounter">0</span> / <span id="totalFrames">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Dashboard -->
+                <div class="playback-dashboard">
+                    <div class="dashboard-section">
+                        <h4>📊 Live Statistics (Frame Data)</h4>
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <span class="stat-label">Total Birds</span>
+                                <span class="stat-value" id="pbTotalBirds">--</span>
+                            </div>
+                            <div class="stat-box healthy">
+                                <span class="stat-label">Healthy</span>
+                                <span class="stat-value" id="pbHealthy">--</span>
+                            </div>
+                            <div class="stat-box warning">
+                                <span class="stat-label">Warning</span>
+                                <span class="stat-value" id="pbWarning">--</span>
+                            </div>
+                            <div class="stat-box critical">
+                                <span class="stat-label">Critical</span>
+                                <span class="stat-value" id="pbCritical">--</span>
+                            </div>
+                            <div class="stat-box quarantine">
+                                <span class="stat-label">Quarantine</span>
+                                <span class="stat-value" id="pbQuarantine">--</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Avg Risk</span>
+                                <span class="stat-value" id="pbAvgRisk">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-section">
+                        <h4>🤖 Robot Activity</h4>
+                        <div class="robot-status-display">
+                            <span class="robot-status-label">Status:</span>
+                            <span class="robot-status-value" id="pbRobotStatus">--</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-section">
+                        <h4>📋 Session Summary</h4>
+                        <div class="summary-grid" id="sessionSummary">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <img src="fav.ico" alt="Chicken Twin Logo" class="logo-icon">
+                        <span class="logo-text">CHICKEN TWIN</span>
+                    </a>
+                    <p>Revolutionizing poultry farming with AI-powered robotics. Built with ❤️ for the Surge X Lablab.ai
+                        Hackathon.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Navigation</h4>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="demo.html">Demo</a></li>
+                            <li><a href="dashboard.html">Dashboard</a></li>
+                            <li><a href="sessions.html">Sessions</a></li>
+                            <li><a href="analytics.html">Analytics</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CHICKEN TWIN. All rights reserved.</p>
+                <p>A Surge X Lablab.ai Hackathon Project</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ===== SESSIONS PAGE - Smooth Video Playback =====
+
+        const CONFIG = {
+            farmSize: 60,
+            quarantineSize: 15,
+            farmHeight: 12
+        };
+
+        // State
+        let sessions = [];
+        let currentSession = null;
+        let currentFrameIndex = 0;
+        let isPlaying = false;
+        let playbackSpeed = 1;
+        let playbackInterval = null;
+        let animationFrameId = null;
+
+        // Three.js
+        let replayScene, replayCamera, replayRenderer;
+        let replayChickenMeshes = [];
+        let replayQuarantineMeshes = [];
+        let replayRobotMesh = null;
+        let replayFarmGroup = null;
+
+        // Thermal
+        let thermalCanvas, thermalCtx;
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            initReplayEngine();
+            initThermalCanvas();
+            initEventListeners();
+            loadSessions();
+        });
+
+        function initEventListeners() {
+            // Mobile nav
+            document.getElementById('navToggle').addEventListener('click', () => {
+                document.getElementById('navMenu').classList.toggle('active');
+                document.getElementById('navToggle').classList.toggle('active');
+            });
+
+            // Refresh
+            document.getElementById('refreshSessions').addEventListener('click', loadSessions);
+
+            // Modal
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('modalOverlay').addEventListener('click', (e) => {
+                if (e.target.id === 'modalOverlay') closeModal();
+            });
+
+            // Playback controls
+            document.getElementById('playPauseBtn').addEventListener('click', togglePlayback);
+            document.getElementById('playBigBtn').addEventListener('click', () => {
+                document.getElementById('videoOverlay').style.display = 'none';
+                startPlayback();
+            });
+            document.getElementById('prevFrameBtn').addEventListener('click', () => stepFrame(-1));
+            document.getElementById('nextFrameBtn').addEventListener('click', () => stepFrame(1));
+            document.getElementById('skipBackBtn').addEventListener('click', () => skipTime(-5));
+            document.getElementById('skipForwardBtn').addEventListener('click', () => skipTime(5));
+            document.getElementById('speedSelect').addEventListener('change', (e) => {
+                playbackSpeed = parseFloat(e.target.value);
+                if (isPlaying) {
+                    stopPlayback();
+                    startPlayback();
+                }
+            });
+
+            // Progress bar
+            const progressBar = document.getElementById('progressBar');
+            let isDragging = false;
+
+            progressBar.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                seekToPosition(e);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) seekToPosition(e);
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            function seekToPosition(e) {
+                const rect = progressBar.getBoundingClientRect();
+                const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                if (currentSession && currentSession.frames) {
+                    currentFrameIndex = Math.floor(percent * (currentSession.frames.length - 1));
+                    renderFrame(currentFrameIndex);
+                    updateProgressBar();
+                }
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (!currentSession) return;
+                switch (e.code) {
+                    case 'Space':
+                        e.preventDefault();
+                        togglePlayback();
+                        break;
+                    case 'ArrowLeft':
+                        stepFrame(-1);
+                        break;
+                    case 'ArrowRight':
+                        stepFrame(1);
+                        break;
+                    case 'ArrowUp':
+                        skipTime(5);
+                        break;
+                    case 'ArrowDown':
+                        skipTime(-5);
+                        break;
+                }
+            });
+        }
+
+        // ===== LOAD SESSIONS =====
+        async function loadSessions() {
+            try {
+                // Try server first
+                const response = await fetch('/api/sessions');
+                if (response.ok) {
+                    const serverSessions = await response.json();
+                    // Load full session data for each
+                    sessions = [];
+                    for (const s of serverSessions) {
+                        const fullResponse = await fetch(`/api/sessions/${s.id}`);
+                        if (fullResponse.ok) {
+                            sessions.push(await fullResponse.json());
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Server not available, loading from localStorage');
+            }
+
+            // Fallback to localStorage
+            if (sessions.length === 0) {
+                sessions = JSON.parse(localStorage.getItem('chickenTwin_sessions') || '[]');
+            }
+
+            renderSessionsList();
+        }
+
+        function renderSessionsList() {
+            const grid = document.getElementById('sessionsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            document.getElementById('sessionCount').textContent = sessions.length;
+
+            if (sessions.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'flex';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            grid.innerHTML = sessions.map((session, index) => {
+                const startTime = new Date(session.startTime);
+                const duration = formatDuration(session.duration || 0);
+                const frameCount = session.frames ? session.frames.length : 0;
+                const fps = session.fps || 30;
+                const summary = session.summary || {};
+
+                return `
+                    <div class="session-card" data-index="${index}">
+                        <div class="session-card-header">
+                            <div class="session-card-id">
+                                <span class="session-icon">📹</span>
+                                <span>${session.id ? session.id.replace('session_', 'Session ') : 'Session'}</span>
+                            </div>
+                            <span class="session-date">${startTime.toLocaleDateString()}</span>
+                        </div>
+                        <div class="session-card-body">
+                            <div class="session-preview">
+                                <div class="preview-thumbnail">
+                                    <span class="preview-play">▶</span>
+                                </div>
+                                <div class="preview-info">
+                                    <span class="preview-duration">${duration}</span>
+                                    <span class="preview-frames">${frameCount} frames @ ${fps}fps</span>
+                                </div>
+                            </div>
+                            <div class="session-stats-mini">
+                                <div class="mini-stat">
+                                    <span class="mini-label">Birds</span>
+                                    <span class="mini-value">${summary.totalBirds || '--'}</span>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-label">Health</span>
+                                    <span class="mini-value ${getHealthClass(summary.avgHealthScore)}">${summary.avgHealthScore || '--'}%</span>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-label">Quarantine</span>
+                                    <span class="mini-value">${summary.quarantined || '0'}</span>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-label">Avg Temp</span>
+                                    <span class="mini-value">${summary.avgTemperature || '--'}°C</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="session-card-footer">
+                            <button class="btn btn-primary btn-sm" onclick="openSession(${index})">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                Watch Recording
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSession(${index}, event)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getHealthClass(score) {
+            if (!score || score === '--') return '';
+            const num = parseFloat(score);
+            if (num >= 80) return 'healthy';
+            if (num >= 50) return 'warning';
+            return 'critical';
+        }
+
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            if (hours > 0) {
+                return `${hours}:${(minutes % 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
+        }
+
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ===== THREE.JS REPLAY ENGINE =====
+        function initReplayEngine() {
+            const canvas = document.getElementById('replay3DCanvas');
+
+            replayScene = new THREE.Scene();
+            replayScene.background = new THREE.Color(0x87CEEB);
+            replayScene.fog = new THREE.FogExp2(0x87CEEB, 0.008);
+
+            replayCamera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000);
+            replayCamera.position.set(0, 10, 40);
+
+            replayRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            replayRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            replayRenderer.shadowMap.enabled = true;
+
+            // Lighting
+            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            replayScene.add(ambient);
+
+            const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+            sun.position.set(50, 100, 50);
+            sun.castShadow = true;
+            replayScene.add(sun);
+
+            createReplayEnvironment();
+        }
+
+        function createReplayEnvironment() {
+            replayFarmGroup = new THREE.Group();
+
+            // Ground
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(200, 200),
+                new THREE.MeshLambertMaterial({ color: 0x4CAF50 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            replayScene.add(ground);
+
+            // Farm floor
+            const farmFloor = new THREE.Mesh(
+                new THREE.PlaneGeometry(CONFIG.farmSize, CONFIG.farmSize),
+                new THREE.MeshLambertMaterial({ color: 0xD2B48C })
+            );
+            farmFloor.rotation.x = -Math.PI / 2;
+            farmFloor.position.y = 0.01;
+            farmFloor.receiveShadow = true;
+            replayFarmGroup.add(farmFloor);
+
+            // Walls - fully enclosed
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const h = CONFIG.farmHeight;
+            const s = CONFIG.farmSize / 2;
+
+            const walls = [
+                { p: [0, h / 2, -s], s: [CONFIG.farmSize, h, 0.5] },   // Back
+                { p: [-s, h / 2, 0], s: [0.5, h, CONFIG.farmSize] },   // Left
+                { p: [s, h / 2, 0], s: [0.5, h, CONFIG.farmSize] },    // Right
+                { p: [0, h / 2, s], s: [CONFIG.farmSize, h, 0.5] }     // Front (fully enclosed)
+            ];
+
+            walls.forEach(w => {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(...w.s), wallMat);
+                wall.position.set(...w.p);
+                wall.castShadow = true;
+                replayFarmGroup.add(wall);
+            });
+
+            // Roof
+            const roof = new THREE.Mesh(
+                new THREE.PlaneGeometry(CONFIG.farmSize + 4, CONFIG.farmSize + 4),
+                new THREE.MeshLambertMaterial({ color: 0x654321, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
+            );
+            roof.rotation.x = Math.PI / 2;
+            roof.position.y = h;
+            replayFarmGroup.add(roof);
+
+            // Beams
+            const beamMat = new THREE.MeshLambertMaterial({ color: 0x4a3728 });
+            for (let i = -2; i <= 2; i++) {
+                const beam = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.farmSize + 2, 0.4, 0.4), beamMat);
+                beam.position.set(0, h - 0.2, i * 12);
+                replayFarmGroup.add(beam);
+            }
+
+            replayScene.add(replayFarmGroup);
+
+            // Quarantine area - INSIDE farm corner
+            const qSize = CONFIG.quarantineSize;
+            const qHeight = CONFIG.farmHeight - 2;
+            const halfFarm = CONFIG.farmSize / 2;
+            const qX = halfFarm - qSize / 2 - 2;
+            const qZ = halfFarm - qSize / 2 - 2;
+
+            const qFloor = new THREE.Mesh(
+                new THREE.PlaneGeometry(qSize, qSize),
+                new THREE.MeshLambertMaterial({ color: 0xFFCCCC })
+            );
+            qFloor.rotation.x = -Math.PI / 2;
+            qFloor.position.set(qX, 0.03, qZ);
+            replayScene.add(qFloor);
+
+            const qWallMat = new THREE.MeshLambertMaterial({ color: 0xFF6B6B, transparent: true, opacity: 0.35 });
+            [
+                [qX, qHeight / 2, qZ - qSize / 2, qSize, qHeight, 0.15],
+                [qX, qHeight / 2, qZ + qSize / 2, qSize, qHeight, 0.15],
+                [qX - qSize / 2, qHeight / 2, qZ, 0.15, qHeight, qSize],
+                [qX + qSize / 2, qHeight / 2, qZ, 0.15, qHeight, qSize]
+            ].forEach(w => {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w[3], w[4], w[5]), qWallMat);
+                wall.position.set(w[0], w[1], w[2]);
+                replayScene.add(wall);
+            });
+
+            // Create robot mesh
+            createReplayRobot();
+        }
+
+        function createReplayRobot() {
+            replayRobotMesh = new THREE.Group();
+
+            const railMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
+            const armMat = new THREE.MeshLambertMaterial({ color: 0xF5F5F5 });
+            const jointMat = new THREE.MeshLambertMaterial({ color: 0xFFCC00 });
+            const gripperMat = new THREE.MeshLambertMaterial({ color: 0x00CCFF });
+
+            // Ceiling Rail System
+            const railLength = CONFIG.farmSize - 10;
+            const rail = new THREE.Mesh(
+                new THREE.BoxGeometry(railLength, 0.4, 0.6),
+                railMat
+            );
+            rail.position.set(0, CONFIG.farmHeight - 0.5, 0);
+            replayRobotMesh.add(rail);
+
+            // Carriage
+            const carriage = new THREE.Mesh(
+                new THREE.BoxGeometry(2.5, 1, 1.5),
+                new THREE.MeshLambertMaterial({ color: 0x666666 })
+            );
+            carriage.position.set(0, CONFIG.farmHeight - 1.2, 0);
+            replayRobotMesh.add(carriage);
+
+            // Arm Group
+            const armGroup = new THREE.Group();
+            let currentY = CONFIG.farmHeight - 1.8;
+            const segmentLengths = [1.8, 1.5, 1.3, 1.1, 0.9, 0.7];
+            const segmentWidths = [0.25, 0.22, 0.20, 0.18, 0.15, 0.12];
+
+            for (let i = 0; i < 6; i++) {
+                const joint = new THREE.Mesh(
+                    new THREE.SphereGeometry(segmentWidths[i] + 0.08, 12, 12),
+                    jointMat
+                );
+                joint.position.set(0, currentY, 0);
+                armGroup.add(joint);
+
+                currentY -= 0.1;
+
+                const segment = new THREE.Mesh(
+                    new THREE.CylinderGeometry(segmentWidths[i] - 0.03, segmentWidths[i], segmentLengths[i], 12),
+                    armMat
+                );
+                segment.position.set(0, currentY - segmentLengths[i] / 2, 0);
+                armGroup.add(segment);
+
+                currentY -= segmentLengths[i] + 0.05;
+            }
+
+            // End Effector
+            const endEffector = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.25, 0.18, 0.5, 12),
+                gripperMat
+            );
+            endEffector.position.set(0, currentY - 0.2, 0);
+            armGroup.add(endEffector);
+
+            replayRobotMesh.add(armGroup);
+
+            // Status Light
+            const statusLight = new THREE.Mesh(
+                new THREE.SphereGeometry(0.12, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0x00FF00 })
+            );
+            statusLight.position.set(0.8, CONFIG.farmHeight - 1, 0.5);
+            replayRobotMesh.add(statusLight);
+
+            replayScene.add(replayRobotMesh);
+        }
+
+        function createReplayChicken(data, isQuarantine = false) {
+            const group = new THREE.Group();
+
+            const bodyColor = data.s === 'c' ? 0xFF6B6B : data.s === 'w' ? 0xFFD93D : 0xFFFFFF;
+            const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+
+            // Body
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), bodyMat);
+            body.scale.set(1, 0.8, 1.1);
+            body.position.y = 0.5;
+            group.add(body);
+
+            // Head
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), new THREE.MeshLambertMaterial({ color: 0xFFFFFF }));
+            head.position.set(0, 0.9, 0.4);
+            group.add(head);
+
+            // Beak
+            const beak = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.25, 6), new THREE.MeshLambertMaterial({ color: 0xFFA500 }));
+            beak.rotation.x = Math.PI / 2;
+            beak.position.set(0, 0.85, 0.65);
+            group.add(beak);
+
+            // Comb
+            const comb = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.25), new THREE.MeshLambertMaterial({ color: 0xFF0000 }));
+            comb.position.set(0, 1.1, 0.35);
+            group.add(comb);
+
+            group.position.set(data.x, 0, data.z);
+            group.rotation.y = data.d || 0;
+            group.userData = { id: data.id, isQuarantine };
+
+            return group;
+        }
+
+        function initThermalCanvas() {
+            thermalCanvas = document.getElementById('replayThermalCanvas');
+            thermalCtx = thermalCanvas.getContext('2d');
+        }
+
+        function resizeCanvases() {
+            const container3D = document.getElementById('replay3DCanvas').parentElement;
+            const containerThermal = document.getElementById('replayThermalCanvas').parentElement;
+
+            if (container3D && replayRenderer) {
+                // Use fallback dimensions if container reports 0
+                let w = container3D.clientWidth || 640;
+                let h = container3D.clientHeight || 360;
+
+                // Ensure minimum dimensions
+                w = Math.max(w, 320);
+                h = Math.max(h, 180);
+
+                replayRenderer.setSize(w, h);
+                replayCamera.aspect = w / h;
+                replayCamera.updateProjectionMatrix();
+            }
+
+            if (containerThermal && thermalCanvas) {
+                // Use fallback dimensions if container reports 0
+                let w = containerThermal.clientWidth || 640;
+                let h = containerThermal.clientHeight || 360;
+
+                // Ensure minimum dimensions
+                w = Math.max(w, 320);
+                h = Math.max(h, 180);
+
+                thermalCanvas.width = w;
+                thermalCanvas.height = h;
+            }
+        }
+
+        // ===== SESSION PLAYBACK =====
+        function openSession(index) {
+            currentSession = sessions[index];
+            currentFrameIndex = 0;
+
+            if (!currentSession || !currentSession.frames || currentSession.frames.length === 0) {
+                alert('This session has no recorded frames.');
+                return;
+            }
+
+            // Update modal info
+            const startTime = new Date(currentSession.startTime);
+            document.getElementById('modalTitle').textContent = 'Session Recording';
+            document.getElementById('modalSubtitle').textContent =
+                `${startTime.toLocaleDateString()} ${startTime.toLocaleTimeString()} • ${formatDuration(currentSession.duration)} • ${currentSession.frames.length} frames`;
+
+            // Update total time
+            document.getElementById('totalTimeLabel').textContent = formatDuration(currentSession.duration);
+            document.getElementById('totalFrames').textContent = currentSession.frames.length;
+
+            // Render summary
+            renderSessionSummary();
+
+            // Show modal
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('videoOverlay').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            // Resize after modal is visible
+            setTimeout(() => {
+                resizeCanvases();
+                renderFrame(0);
+            }, 100);
+        }
+
+        function closeModal() {
+            stopPlayback();
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+            currentSession = null;
+            clearReplayScene();
+        }
+
+        function renderSessionSummary() {
+            const summary = currentSession.summary || {};
+            const container = document.getElementById('sessionSummary');
+
+            container.innerHTML = `
+                <div class="summary-item">
+                    <span class="summary-label">Duration</span>
+                    <span class="summary-value">${formatDuration(currentSession.duration)}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Frames</span>
+                    <span class="summary-value">${currentSession.frames.length}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">FPS</span>
+                    <span class="summary-value">${currentSession.fps || 30}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Birds</span>
+                    <span class="summary-value">${summary.totalBirds || '--'}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Birds Quarantined</span>
+                    <span class="summary-value">${summary.quarantined || '0'}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Avg Health Score</span>
+                    <span class="summary-value">${summary.avgHealthScore || '--'}%</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Avg Risk Score</span>
+                    <span class="summary-value">${summary.avgRiskScore || '--'}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Symptoms Detected</span>
+                    <span class="summary-value">${summary.symptomsDetected || '0'}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">AI Confidence</span>
+                    <span class="summary-value">${summary.avgConfidence || '--'}%</span>
+                </div>
+            `;
+        }
+
+        function clearReplayScene() {
+            replayChickenMeshes.forEach(m => replayScene.remove(m));
+            replayQuarantineMeshes.forEach(m => replayScene.remove(m));
+            replayChickenMeshes = [];
+            replayQuarantineMeshes = [];
+        }
+
+        function renderFrame(frameIndex) {
+            if (!currentSession || !currentSession.frames) return;
+            if (frameIndex < 0 || frameIndex >= currentSession.frames.length) return;
+
+            const frame = currentSession.frames[frameIndex];
+            currentFrameIndex = frameIndex;
+
+            // Update camera position and rotation (exact recording)
+            if (frame.cam) {
+                replayCamera.position.set(frame.cam.x, frame.cam.y, frame.cam.z);
+                replayCamera.rotation.set(frame.cam.rx || 0, frame.cam.ry || 0, 0, 'YXZ');
+            }
+
+            // Clear and recreate chickens
+            clearReplayScene();
+
+            // Farm chickens
+            if (frame.chickens) {
+                frame.chickens.forEach(c => {
+                    const mesh = createReplayChicken(c, false);
+                    replayScene.add(mesh);
+                    replayChickenMeshes.push(mesh);
+                });
+            }
+
+            // Quarantine chickens
+            if (frame.quarantine) {
+                frame.quarantine.forEach(c => {
+                    const mesh = createReplayChicken({
+                        ...c,
+                        s: 'c', // Quarantine chickens are critical
+                        d: 0
+                    }, true);
+                    replayScene.add(mesh);
+                    replayQuarantineMeshes.push(mesh);
+                });
+            }
+
+            // Update robot
+            if (frame.robot && replayRobotMesh) {
+                replayRobotMesh.position.x = frame.robot.x;
+                replayRobotMesh.position.z = frame.robot.z;
+            }
+
+            // Render 3D
+            replayRenderer.render(replayScene, replayCamera);
+
+            // Render thermal
+            renderThermalFrame(frame);
+
+            // Update UI
+            updatePlaybackUI(frame);
+        }
+
+        function renderThermalFrame(frame) {
+            if (!thermalCtx) return;
+
+            const width = thermalCanvas.width;
+            const height = thermalCanvas.height;
+
+            // Background
+            thermalCtx.fillStyle = '#0a0a1a';
+            thermalCtx.fillRect(0, 0, width, height);
+
+            // Grid
+            thermalCtx.strokeStyle = 'rgba(0, 255, 255, 0.08)';
+            thermalCtx.lineWidth = 1;
+            for (let x = 0; x < width; x += 25) {
+                thermalCtx.beginPath();
+                thermalCtx.moveTo(x, 0);
+                thermalCtx.lineTo(x, height);
+                thermalCtx.stroke();
+            }
+            for (let y = 0; y < height; y += 25) {
+                thermalCtx.beginPath();
+                thermalCtx.moveTo(0, y);
+                thermalCtx.lineTo(width, y);
+                thermalCtx.stroke();
+            }
+
+            // Calculate layout
+            const padding = 15;
+            const totalWidth = CONFIG.farmSize + CONFIG.quarantineSize + 10;
+            const scale = (width - padding * 2) / totalWidth;
+
+            const farmW = CONFIG.farmSize * scale;
+            const farmH = Math.min(height - padding * 2, CONFIG.farmSize * scale * 0.8);
+            const farmX = padding;
+            const farmY = (height - farmH) / 2;
+
+            const qW = CONFIG.quarantineSize * scale;
+            const qH = Math.min(height - padding * 2, CONFIG.quarantineSize * scale * 0.8);
+            const qX = farmX + farmW + 10 * scale;
+            const qY = (height - qH) / 2;
+
+            // Farm boundary
+            thermalCtx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+            thermalCtx.lineWidth = 2;
+            thermalCtx.strokeRect(farmX, farmY, farmW, farmH);
+
+            // Quarantine boundary
+            thermalCtx.strokeStyle = 'rgba(255, 100, 100, 0.4)';
+            thermalCtx.strokeRect(qX, qY, qW, qH);
+
+            // Labels
+            thermalCtx.fillStyle = 'rgba(0, 255, 255, 0.7)';
+            thermalCtx.font = 'bold 10px Inter';
+            thermalCtx.fillText('MAIN FARM', farmX + 5, farmY + 15);
+
+            thermalCtx.fillStyle = 'rgba(255, 100, 100, 0.7)';
+            thermalCtx.fillText('QUARANTINE', qX + 5, qY + 15);
+
+            // Render chickens
+            if (frame.chickens) {
+                frame.chickens.forEach(c => {
+                    const x = farmX + ((c.x + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmW;
+                    const y = farmY + ((c.z + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmH;
+                    renderThermalChicken(x, y, c.t, c.s, c.id);
+                });
+            }
+
+            // Render quarantine chickens
+            if (frame.quarantine) {
+                frame.quarantine.forEach(c => {
+                    const relX = c.x - (CONFIG.farmSize / 2 + CONFIG.quarantineSize / 2 + 5);
+                    const x = qX + ((relX + CONFIG.quarantineSize / 2) / CONFIG.quarantineSize) * qW;
+                    const y = qY + ((c.z + CONFIG.quarantineSize / 2) / CONFIG.quarantineSize) * qH;
+                    renderThermalChicken(x, y, c.t, 'c', c.id);
+                });
+            }
+
+            // Robot
+            if (frame.robot) {
+                const rx = farmX + ((frame.robot.x + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmW;
+                const ry = farmY + ((frame.robot.z + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmH;
+
+                thermalCtx.fillStyle = '#00FFFF';
+                thermalCtx.beginPath();
+                thermalCtx.arc(rx, ry, 8, 0, Math.PI * 2);
+                thermalCtx.fill();
+
+                thermalCtx.fillStyle = '#000';
+                thermalCtx.font = 'bold 10px Arial';
+                thermalCtx.textAlign = 'center';
+                thermalCtx.fillText('🤖', rx, ry + 4);
+            }
+
+            // Playback indicator
+            thermalCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            thermalCtx.font = '10px Inter';
+            thermalCtx.textAlign = 'left';
+            thermalCtx.fillText('▶ PLAYBACK', 10, height - 10);
+        }
+
+        function renderThermalChicken(x, y, temp, status, id) {
+            const normalizedTemp = Math.max(0, Math.min(1, (temp - 37) / 8));
+            const hue = (1 - normalizedTemp) * 60;
+
+            // Glow
+            const gradient = thermalCtx.createRadialGradient(x, y, 0, x, y, 15);
+            gradient.addColorStop(0, `hsla(${hue}, 100%, 55%, 0.9)`);
+            gradient.addColorStop(0.5, `hsla(${hue}, 100%, 45%, 0.5)`);
+            gradient.addColorStop(1, `hsla(${hue}, 100%, 35%, 0)`);
+
+            thermalCtx.fillStyle = gradient;
+            thermalCtx.beginPath();
+            thermalCtx.arc(x, y, 15, 0, Math.PI * 2);
+            thermalCtx.fill();
+
+            // Center
+            thermalCtx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+            thermalCtx.beginPath();
+            thermalCtx.arc(x, y, 4, 0, Math.PI * 2);
+            thermalCtx.fill();
+
+            // Temperature
+            thermalCtx.fillStyle = '#FFFFFF';
+            thermalCtx.font = 'bold 8px Inter';
+            thermalCtx.textAlign = 'center';
+            thermalCtx.fillText(`${temp.toFixed(1)}°`, x, y - 10);
+
+            // Status ring
+            if (status === 'c') {
+                thermalCtx.strokeStyle = '#FF0000';
+                thermalCtx.lineWidth = 1.5;
+                thermalCtx.beginPath();
+                thermalCtx.arc(x, y, 10, 0, Math.PI * 2);
+                thermalCtx.stroke();
+            } else if (status === 'w') {
+                thermalCtx.strokeStyle = '#FFA500';
+                thermalCtx.lineWidth = 1;
+                thermalCtx.beginPath();
+                thermalCtx.arc(x, y, 10, 0, Math.PI * 2);
+                thermalCtx.stroke();
+            }
+        }
+
+        function updatePlaybackUI(frame) {
+            // Time
+            const currentTime = frame.t || 0;
+            document.getElementById('currentTimeLabel').textContent = formatTime(currentTime);
+            document.getElementById('videoTimeDisplay').textContent =
+                `${formatTime(currentTime)} / ${formatDuration(currentSession.duration)}`;
+
+            // Frame counter
+            document.getElementById('frameCounter').textContent = currentFrameIndex + 1;
+
+            // Progress bar
+            updateProgressBar();
+
+            // Stats
+            const chickens = frame.chickens || [];
+            const quarantine = frame.quarantine || [];
+            const all = [...chickens, ...quarantine];
+
+            const healthy = chickens.filter(c => c.s === 'h').length;
+            const warning = chickens.filter(c => c.s === 'w').length;
+            const critical = chickens.filter(c => c.s === 'c').length;
+
+            document.getElementById('pbTotalBirds').textContent = all.length;
+            document.getElementById('pbHealthy').textContent = healthy;
+            document.getElementById('pbWarning').textContent = warning;
+            document.getElementById('pbCritical').textContent = critical;
+            document.getElementById('pbQuarantine').textContent = quarantine.length;
+
+            if (all.length > 0) {
+                const avgTemp = all.reduce((sum, c) => sum + c.t, 0) / all.length;
+                document.getElementById('pbAvgTemp').textContent = `${avgTemp.toFixed(1)}°C`;
+            }
+
+            // Robot status
+            if (frame.robot) {
+                document.getElementById('pbRobotStatus').textContent =
+                    (frame.robot.s || 'idle').replace(/_/g, ' ').toUpperCase();
+            }
+        }
+
+        function updateProgressBar() {
+            if (!currentSession || !currentSession.frames) return;
+
+            const percent = (currentFrameIndex / (currentSession.frames.length - 1)) * 100;
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('progressHandle').style.left = `${percent}%`;
+        }
+
+        // ===== PLAYBACK CONTROLS =====
+        function togglePlayback() {
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                startPlayback();
+            }
+        }
+
+        function startPlayback() {
+            if (!currentSession || !currentSession.frames) {
+                console.error('❌ Cannot start playback: No session loaded');
+                return;
+            }
+
+            if (currentSession.frames.length === 0) {
+                console.error('❌ Cannot start playback: Session has no frames');
+                return;
+            }
+
+            console.log('▶️ Starting playback...', {
+                frames: currentSession.frames.length,
+                fps: currentSession.fps,
+                speed: playbackSpeed
+            });
+
+            isPlaying = true;
+            document.getElementById('playIcon').style.display = 'none';
+            document.getElementById('pauseIcon').style.display = 'block';
+
+            const fps = currentSession.fps || 30;
+            const frameTime = 1000 / (fps * playbackSpeed);
+
+            let lastTime = performance.now();
+            let accumulator = 0;
+
+            function playbackLoop(currentTime) {
+                if (!isPlaying) return;
+
+                const delta = currentTime - lastTime;
+                lastTime = currentTime;
+                accumulator += delta;
+
+                while (accumulator >= frameTime) {
+                    currentFrameIndex++;
+                    if (currentFrameIndex >= currentSession.frames.length) {
+                        currentFrameIndex = 0; // Loop
+                    }
+                    accumulator -= frameTime;
+                }
+
+                renderFrame(currentFrameIndex);
+                animationFrameId = requestAnimationFrame(playbackLoop);
+            }
+
+            // Ensure canvases are ready
+            resizeCanvases();
+
+            animationFrameId = requestAnimationFrame(playbackLoop);
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            document.getElementById('playIcon').style.display = 'block';
+            document.getElementById('pauseIcon').style.display = 'none';
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        function stepFrame(direction) {
+            stopPlayback();
+
+            currentFrameIndex += direction;
+            if (currentFrameIndex < 0) currentFrameIndex = currentSession.frames.length - 1;
+            if (currentFrameIndex >= currentSession.frames.length) currentFrameIndex = 0;
+
+            renderFrame(currentFrameIndex);
+        }
+
+        function skipTime(seconds) {
+            if (!currentSession || !currentSession.frames) return;
+
+            stopPlayback();
+
+            const fps = currentSession.fps || 30;
+            const framesToSkip = Math.round(seconds * fps);
+
+            currentFrameIndex += framesToSkip;
+            if (currentFrameIndex < 0) currentFrameIndex = 0;
+            if (currentFrameIndex >= currentSession.frames.length) {
+                currentFrameIndex = currentSession.frames.length - 1;
+            }
+
+            renderFrame(currentFrameIndex);
+        }
+
+        // ===== DELETE SESSION =====
+        async function deleteSession(index, event) {
+            event.stopPropagation();
+
+            if (!confirm('Are you sure you want to delete this session? This cannot be undone.')) return;
+
+            const session = sessions[index];
+
+            // Try to delete from server
+            try {
+                await fetch(`/api/sessions/${session.id}`, { method: 'DELETE' });
+            } catch (error) {
+                console.log('Server not available');
+            }
+
+            // Delete from localStorage
+            sessions.splice(index, 1);
+            localStorage.setItem('chickenTwin_sessions', JSON.stringify(sessions));
+
+            renderSessionsList();
+        }
+        // ═══════════════════════════════════════════════════════════════
+        // KEYPOINT RENDERING FOR PLAYBACK
+        // ═══════════════════════════════════════════════════════════════
+
+        const KEYPOINT_COLORS = {
+            healthy: { keypoint: '#00FF00', skeleton: '#00CC00', glow: 'rgba(0, 255, 0, 0.3)' },
+            monitoring: { keypoint: '#FFFF00', skeleton: '#FFB800', glow: 'rgba(255, 184, 0, 0.3)' },
+            elevated: { keypoint: '#FF8800', skeleton: '#FF6600', glow: 'rgba(255, 102, 0, 0.3)' },
+            highRisk: { keypoint: '#FF0000', skeleton: '#CC0000', glow: 'rgba(255, 0, 0, 0.4)' },
+            isolated: { keypoint: '#00CCFF', skeleton: '#0088FF', glow: 'rgba(0, 136, 255, 0.3)' }
+        };
+
+        const SKELETON_CONNECTIONS = [
+            [0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 18],
+            [4, 6], [6, 7], [7, 8], [4, 9], [9, 10], [10, 11],
+            [4, 12], [12, 13], [13, 14], [4, 15], [15, 16], [16, 17]
+        ];
+
+        function getColorSchemeForRisk(riskScore, inQuarantine = false) {
+            if (inQuarantine) return KEYPOINT_COLORS.isolated;
+            if (riskScore >= 0.8) return KEYPOINT_COLORS.highRisk;
+            if (riskScore >= 0.6) return KEYPOINT_COLORS.elevated;
+            if (riskScore >= 0.4) return KEYPOINT_COLORS.monitoring;
+            return KEYPOINT_COLORS.healthy;
+        }
+
+        function renderThermalFrameWithKeypoints(frame) {
+            if (!thermalCtx) return;
+
+            const width = thermalCanvas.width;
+            const height = thermalCanvas.height;
+
+            // Background
+            thermalCtx.fillStyle = '#0a0a1a';
+            thermalCtx.fillRect(0, 0, width, height);
+
+            // Grid
+            thermalCtx.strokeStyle = 'rgba(0, 255, 255, 0.08)';
+            thermalCtx.lineWidth = 1;
+            for (let x = 0; x < width; x += 25) {
+                thermalCtx.beginPath();
+                thermalCtx.moveTo(x, 0);
+                thermalCtx.lineTo(x, height);
+                thermalCtx.stroke();
+            }
+            for (let y = 0; y < height; y += 25) {
+                thermalCtx.beginPath();
+                thermalCtx.moveTo(0, y);
+                thermalCtx.lineTo(width, y);
+                thermalCtx.stroke();
+            }
+
+            // Layout calculation
+            const padding = 15;
+            const totalWidth = CONFIG.farmSize + CONFIG.quarantineSize + 10;
+            const scale = (width - padding * 2) / totalWidth;
+
+            const farmW = CONFIG.farmSize * scale;
+            const farmH = Math.min(height - padding * 2, CONFIG.farmSize * scale * 0.8);
+            const farmX = padding;
+            const farmY = (height - farmH) / 2;
+
+            const qW = CONFIG.quarantineSize * scale;
+            const qH = Math.min(height - padding * 2, CONFIG.quarantineSize * scale * 0.8);
+            const qX = farmX + farmW + 10 * scale;
+            const qY = (height - qH) / 2;
+
+            // Draw boundaries
+            drawBoundary(farmX, farmY, farmW, farmH, 'MAIN FARM - AI DETECTION', '#00FFFF');
+            drawBoundary(qX, qY, qW, qH, 'QUARANTINE', '#FF6B6B');
+
+            // Render chickens with keypoints
+            if (frame.chickens) {
+                frame.chickens.forEach(c => {
+                    const x = farmX + ((c.x + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmW;
+                    const y = farmY + ((c.z + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmH;
+
+                    const riskScore = c.r || 0;
+                    const colorScheme = getColorSchemeForRisk(riskScore, false);
+
+                    if (c.kp && c.kp.length > 0) {
+                        renderChickenKeypoints(x, y, c, colorScheme, scale * 0.6);
+                    } else {
+                        renderThermalChicken(x, y, c.t, c.s, c.id);
+                    }
+                });
+            }
+
+            // Render quarantine chickens
+            if (frame.quarantine) {
+                frame.quarantine.forEach(c => {
+                    const relX = c.x - (CONFIG.farmSize / 2 + CONFIG.quarantineSize / 2 + 5);
+                    const x = qX + ((relX + CONFIG.quarantineSize / 2) / CONFIG.quarantineSize) * qW;
+                    const y = qY + ((c.z + CONFIG.quarantineSize / 2) / CONFIG.quarantineSize) * qH;
+
+                    const colorScheme = getColorSchemeForRisk(1.0, true);
+
+                    if (c.kp && c.kp.length > 0) {
+                        renderChickenKeypoints(x, y, c, colorScheme, scale * 0.6);
+                    } else {
+                        renderThermalChicken(x, y, c.t, 'c', c.id);
+                    }
+                });
+            }
+
+            // Robot
+            if (frame.robot) {
+                const rx = farmX + ((frame.robot.x + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmW;
+                const ry = farmY + ((frame.robot.z + CONFIG.farmSize / 2) / CONFIG.farmSize) * farmH;
+
+                thermalCtx.fillStyle = '#00FFFF';
+                thermalCtx.beginPath();
+                thermalCtx.arc(rx, ry, 10, 0, Math.PI * 2);
+                thermalCtx.fill();
+
+                thermalCtx.fillStyle = '#000';
+                thermalCtx.font = 'bold 12px Arial';
+                thermalCtx.textAlign = 'center';
+                thermalCtx.fillText('🤖', rx, ry + 4);
+            }
+
+            // Playback indicator
+            thermalCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            thermalCtx.font = '10px Inter';
+            thermalCtx.textAlign = 'left';
+            thermalCtx.fillText('▶ PLAYBACK', 10, height - 10);
+
+            // AI indicator
+            thermalCtx.fillStyle = '#00FF00';
+            thermalCtx.fillText('● AI KEYPOINTS ACTIVE', 10, height - 25);
+        }
+
+        function drawBoundary(x, y, w, h, label, color) {
+            thermalCtx.strokeStyle = color + '66';
+            thermalCtx.lineWidth = 2;
+            thermalCtx.strokeRect(x, y, w, h);
+
+            // Corners
+            const cornerSize = 12;
+            thermalCtx.strokeStyle = color;
+            thermalCtx.lineWidth = 3;
+
+            // Top-left
+            thermalCtx.beginPath();
+            thermalCtx.moveTo(x, y + cornerSize);
+            thermalCtx.lineTo(x, y);
+            thermalCtx.lineTo(x + cornerSize, y);
+            thermalCtx.stroke();
+
+            // Top-right
+            thermalCtx.beginPath();
+            thermalCtx.moveTo(x + w - cornerSize, y);
+            thermalCtx.lineTo(x + w, y);
+            thermalCtx.lineTo(x + w, y + cornerSize);
+            thermalCtx.stroke();
+
+            // Bottom-left
+            thermalCtx.beginPath();
+            thermalCtx.moveTo(x, y + h - cornerSize);
+            thermalCtx.lineTo(x, y + h);
+            thermalCtx.lineTo(x + cornerSize, y + h);
+            thermalCtx.stroke();
+
+            // Bottom-right
+            thermalCtx.beginPath();
+            thermalCtx.moveTo(x + w - cornerSize, y + h);
+            thermalCtx.lineTo(x + w, y + h);
+            thermalCtx.lineTo(x + w, y + h - cornerSize);
+            thermalCtx.stroke();
+
+            // Label
+            thermalCtx.fillStyle = color + 'AA';
+            thermalCtx.font = 'bold 9px Inter';
+            thermalCtx.textAlign = 'left';
+            thermalCtx.fillText(label, x + 5, y + 12);
+        }
+
+        function renderChickenKeypoints(screenX, screenY, chicken, colorScheme, scale) {
+            const kp = chicken.kp;
+            if (!kp || kp.length === 0) return;
+
+            // Convert keypoints to screen coordinates
+            const screenKeypoints = kp.map(p => ({
+                x: screenX + (p.x || 0) * scale * 40,
+                y: screenY + (p.z || 0) * scale * 40,
+                confidence: p.c || 0.9
+            }));
+
+            // Draw bounding box
+            const boxSize = 25;
+            thermalCtx.strokeStyle = colorScheme.keypoint;
+            thermalCtx.lineWidth = 2;
+            thermalCtx.strokeRect(screenX - boxSize / 2, screenY - boxSize / 2, boxSize, boxSize);
+
+            // Draw skeleton
+            thermalCtx.strokeStyle = colorScheme.skeleton;
+            thermalCtx.lineWidth = 1.5;
+
+            SKELETON_CONNECTIONS.forEach(([fromIdx, toIdx]) => {
+                if (fromIdx < screenKeypoints.length && toIdx < screenKeypoints.length) {
+                    const from = screenKeypoints[fromIdx];
+                    const to = screenKeypoints[toIdx];
+
+                    thermalCtx.beginPath();
+                    thermalCtx.moveTo(from.x, from.y);
+                    thermalCtx.lineTo(to.x, to.y);
+                    thermalCtx.stroke();
+                }
+            });
+
+            // Draw keypoints
+            screenKeypoints.forEach((kp, idx) => {
+                // Glow
+                const gradient = thermalCtx.createRadialGradient(kp.x, kp.y, 0, kp.x, kp.y, 6);
+                gradient.addColorStop(0, colorScheme.keypoint);
+                gradient.addColorStop(1, 'transparent');
+                thermalCtx.fillStyle = gradient;
+                thermalCtx.globalAlpha = 0.5;
+                thermalCtx.beginPath();
+                thermalCtx.arc(kp.x, kp.y, 6, 0, Math.PI * 2);
+                thermalCtx.fill();
+
+                // Point
+                thermalCtx.globalAlpha = kp.confidence;
+                thermalCtx.fillStyle = colorScheme.keypoint;
+                thermalCtx.beginPath();
+                thermalCtx.arc(kp.x, kp.y, 3, 0, Math.PI * 2);
+                thermalCtx.fill();
+
+                thermalCtx.globalAlpha = 1;
+            });
+
+            // Label
+            thermalCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            thermalCtx.fillRect(screenX - 22, screenY - boxSize / 2 - 16, 44, 14);
+
+            thermalCtx.fillStyle = '#FFFFFF';
+            thermalCtx.font = '8px Inter';
+            thermalCtx.textAlign = 'center';
+            thermalCtx.fillText(`#${chicken.id}`, screenX - 8, screenY - boxSize / 2 - 5);
+
+            thermalCtx.fillStyle = colorScheme.keypoint;
+            const riskPercent = ((chicken.r || 0) * 100).toFixed(0);
+            thermalCtx.fillText(`${riskPercent}%`, screenX + 12, screenY - boxSize / 2 - 5);
+
+            // Temperature
+            thermalCtx.fillStyle = chicken.t > 42 ? '#FF6B6B' : '#AAFFAA';
+            thermalCtx.font = '7px Inter';
+            thermalCtx.fillText(`${chicken.t.toFixed(1)}°C`, screenX, screenY + boxSize / 2 + 10);
+
+            // Symptoms indicator
+            if (chicken.sym && chicken.sym.length > 0) {
+                thermalCtx.fillStyle = '#FF4444';
+                thermalCtx.font = '8px Inter';
+                thermalCtx.fillText(`⚠ ${chicken.sym.length}`, screenX + boxSize / 2 + 5, screenY);
+            }
+        }
+
+        // Override the original renderThermalFrame to use keypoints if available
+        const originalRenderThermalFrame = renderThermalFrame;
+        renderThermalFrame = function (frame) {
+            // Check if frame has keypoint data
+            const hasKeypoints = frame.chickens && frame.chickens.some(c => c.kp && c.kp.length > 0);
+
+            if (hasKeypoints) {
+                renderThermalFrameWithKeypoints(frame);
+            } else {
+                originalRenderThermalFrame(frame);
+            }
+        };
+    </script>
+</body>
+
+</html>

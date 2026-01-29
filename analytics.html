@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics | CHICKEN TWIN - AI-Powered Poultry Robotics</title>
+    <link rel="icon" type="image/x-icon" href="fav.ico">
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/session_manager.js"></script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar scrolled">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="fav.ico" alt="Chicken Twin Logo" class="logo-icon">
+                <span class="logo-text">CHICKEN TWIN</span>
+            </a>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="demo.html" class="nav-link">Demo</a></li>
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="sessions.html" class="nav-link">Sessions</a></li>
+                <li><a href="analytics.html" class="nav-link active">Analytics</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="hero-glow"></div>
+        <div class="container">
+            <div class="page-header-content">
+                <span class="section-tag">Data Intelligence</span>
+                <h1 class="page-title">Analytics Dashboard</h1>
+                <p class="page-subtitle">Comprehensive insights into flock health, trends, and AI performance</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analytics Content -->
+    <section class="analytics-section">
+        <div class="container">
+
+            <!-- Date Range Selector -->
+            <div class="analytics-toolbar">
+                <div class="date-range-selector">
+                    <button class="range-btn active" data-range="today">Today</button>
+                    <button class="range-btn" data-range="7days">Last 7 Days</button>
+                    <button class="range-btn" data-range="30days">Last 30 Days</button>
+                    <button class="range-btn" data-range="custom">Custom Range</button>
+                </div>
+                <div class="toolbar-actions">
+                    <button class="btn btn-secondary btn-sm" id="refreshAnalytics">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="exportReport">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon green">🐔</div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiTotalBirds">0</span>
+                        <span class="kpi-label">Total Birds Monitored</span>
+                        <span class="kpi-trend positive" id="kpiTotalTrend">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon blue">❤️</div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiHealthScore">0%</span>
+                        <span class="kpi-label">Average Health Score</span>
+                        <span class="kpi-trend" id="kpiHealthTrend">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon orange">🤖</div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiInterventions">0</span>
+                        <span class="kpi-label">Robot Interventions</span>
+                        <span class="kpi-trend" id="kpiInterventionTrend">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon purple">✅</div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiRecoveryRate">0%</span>
+                        <span class="kpi-label">Recovery Rate</span>
+                        <span class="kpi-trend positive" id="kpiRecoveryTrend">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts Grid -->
+            <div class="charts-grid">
+
+                <!-- Health Trends Chart -->
+                <div class="chart-card large">
+                    <div class="chart-header">
+                        <h3>📈 Health Trends Over Time</h3>
+                        <div class="chart-legend">
+                            <span class="legend-item"><span class="dot green"></span> Healthy</span>
+                            <span class="legend-item"><span class="dot yellow"></span> Warning</span>
+                            <span class="legend-item"><span class="dot red"></span> Critical</span>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="healthTrendsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Symptom Distribution -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>🩺 Symptom Distribution</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="symptomChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Risk Score Distribution -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>⚠️ Risk Score Distribution</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- AI Confidence Analysis -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>🤖 AI Confidence Analysis</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Intervention Success Rate -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>🤖 Intervention Outcomes</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="interventionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Activity Heatmap -->
+                <div class="chart-card large">
+                    <div class="chart-header">
+                        <h3>🗺️ Spatial Alert Heatmap</h3>
+                        <p class="chart-subtitle">Locations where alerts occur most frequently</p>
+                    </div>
+                    <div class="chart-body heatmap-container">
+                        <canvas id="spatialHeatmap"></canvas>
+                    </div>
+                </div>
+
+                <!-- Daily Activity Timeline -->
+                <div class="chart-card large">
+                    <div class="chart-header">
+                        <h3>📅 Daily Activity Timeline</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="activityTimeline"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Session Analytics Table -->
+            <div class="analytics-table-section">
+                <div class="table-header">
+                    <h3>📊 Session Performance Summary</h3>
+                    <div class="table-actions">
+                        <input type="text" class="search-input" placeholder="Search sessions..." id="sessionSearch">
+                        <select class="filter-select" id="sessionFilter">
+                            <option value="all">All Sessions</option>
+                            <option value="alerts">With Alerts</option>
+                            <option value="interventions">With Interventions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="analytics-table">
+                        <thead>
+                            <tr>
+                                <th>Session ID</th>
+                                <th>Date</th>
+                                <th>Duration</th>
+                                <th>Birds</th>
+                                <th>Health Score</th>
+                                <th>Alerts</th>
+                                <th>Interventions</th>
+                                <th>Avg Risk</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- AI Performance Metrics -->
+            <div class="ai-performance-section">
+                <h3>🤖 AI System Performance</h3>
+                <div class="performance-grid">
+                    <div class="performance-card">
+                        <div class="perf-icon">🎯</div>
+                        <div class="perf-value" id="perfAccuracy">98.5%</div>
+                        <div class="perf-label">Detection Accuracy</div>
+                        <div class="perf-bar">
+                            <div class="perf-fill" style="width: 98.5%"></div>
+                        </div>
+                    </div>
+                    <div class="performance-card">
+                        <div class="perf-icon">⚡</div>
+                        <div class="perf-value" id="perfLatency">85ms</div>
+                        <div class="perf-label">Avg Processing Latency</div>
+                        <div class="perf-bar">
+                            <div class="perf-fill good" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="performance-card">
+                        <div class="perf-icon">🔄</div>
+                        <div class="perf-value" id="perfFPS">30</div>
+                        <div class="perf-label">Processing FPS</div>
+                        <div class="perf-bar">
+                            <div class="perf-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="performance-card">
+                        <div class="perf-icon">✅</div>
+                        <div class="perf-value" id="perfFalsePositive">2.3%</div>
+                        <div class="perf-label">False Positive Rate</div>
+                        <div class="perf-bar">
+                            <div class="perf-fill low" style="width: 2.3%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <img src="fav.ico" alt="Chicken Twin Logo" class="logo-icon">
+                        <span class="logo-text">CHICKEN TWIN</span>
+                    </a>
+                    <p>Revolutionizing poultry farming with AI-powered robotics. Built with ❤️ for the Surge X Lablab.ai
+                        Hackathon.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Navigation</h4>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="demo.html">Demo</a></li>
+                            <li><a href="dashboard.html">Dashboard</a></li>
+                            <li><a href="sessions.html">Sessions</a></li>
+                            <li><a href="analytics.html">Analytics</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CHICKEN TWIN. All rights reserved.</p>
+                <p>A Surge X Lablab.ai Hackathon Project</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CHICKEN TWIN - Analytics Dashboard
+        // ═══════════════════════════════════════════════════════════════
+
+        // Chart.js global configuration
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = 'rgba(74, 222, 128, 0.1)';
+        Chart.defaults.font.family = 'Inter, sans-serif';
+
+        // State
+        let sessions = [];
+        let selectedRange = 'today';
+        let charts = {};
+        let ws = null;
+        let wsConnected = false;
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            initEventListeners();
+            loadData();
+            initCharts();
+            connectWebSocket(); // Start real-time connection
+
+            // Poll localStorage for live updates from demo.html
+            setInterval(() => {
+                const liveData = JSON.parse(localStorage.getItem('chickenTwin_dashboard') || '{}');
+                if (liveData.active) {
+                    updateFromLiveData(liveData);
+                }
+            }, 1000);
+        });
+
+        function updateFromLiveData(data) {
+            // Update KPIs with live data
+            if (data.healthy !== undefined) {
+                const total = (data.healthy || 0) + (data.warning || 0) + (data.critical || 0) + (data.quarantine || 0);
+                document.getElementById('kpiTotalBirds').textContent = total;
+            }
+            if (data.healthScore !== undefined) {
+                document.getElementById('kpiHealthScore').textContent = `${parseFloat(data.healthScore).toFixed(1)}%`;
+            }
+            if (data.quarantine !== undefined) {
+                document.getElementById('kpiInterventions').textContent = data.quarantine;
+            }
+        }
+
+        function initEventListeners() {
+            // Mobile nav
+            document.getElementById('navToggle').addEventListener('click', () => {
+                document.getElementById('navMenu').classList.toggle('active');
+                document.getElementById('navToggle').classList.toggle('active');
+            });
+
+            // Date range selector
+            document.querySelectorAll('.range-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedRange = btn.dataset.range;
+                    updateCharts();
+                });
+            });
+
+            // Refresh button
+            document.getElementById('refreshAnalytics').addEventListener('click', () => {
+                loadData();
+                updateCharts();
+            });
+
+            // Export button
+            document.getElementById('exportReport').addEventListener('click', exportReport);
+
+            // Search and filter
+            document.getElementById('sessionSearch').addEventListener('input', filterSessions);
+            document.getElementById('sessionFilter').addEventListener('change', filterSessions);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DATA LOADING
+        // ═══════════════════════════════════════════════════════════════
+        async function loadData() {
+            // Try server first
+            try {
+                const response = await fetch('/api/sessions');
+                if (response.ok) {
+                    const serverSessions = await response.json();
+                    sessions = [];
+                    for (const s of serverSessions) {
+                        const fullResponse = await fetch(`/api/sessions/${s.id}`);
+                        if (fullResponse.ok) {
+                            sessions.push(await fullResponse.json());
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Server not available, loading from localStorage');
+            }
+
+            // Fallback to localStorage
+            if (sessions.length === 0) {
+                sessions = JSON.parse(localStorage.getItem('chickenTwin_sessions') || '[]');
+            }
+
+            updateKPIs();
+            renderSessionsTable();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // WEBSOCKET REAL-TIME UPDATES
+        // ═══════════════════════════════════════════════════════════════
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+
+            try {
+                ws = new WebSocket('ws://localhost:8765');
+
+                ws.onopen = () => {
+                    console.log('🔌 Analytics WebSocket connected');
+                    wsConnected = true;
+                    // Request current state
+                    ws.send(JSON.stringify({ type: 'dashboard_connect' }));
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (e) {
+                        console.error('WebSocket parse error:', e);
+                    }
+                };
+
+                ws.onclose = () => {
+                    wsConnected = false;
+                    setTimeout(connectWebSocket, 3000); // Retry
+                };
+
+                ws.onerror = () => {
+                    wsConnected = false;
+                };
+            } catch (e) {
+                console.log('WebSocket connection failed:', e);
+            }
+        }
+
+        function handleWebSocketMessage(message) {
+            switch (message.type) {
+                case 'stats_update':
+                    updateFromRealtime(message.data);
+                    break;
+                case 'session_active':
+                    // Could show an indicator that session is live
+                    break;
+            }
+        }
+
+        function updateFromRealtime(data) {
+            if (!data) return;
+
+            // Update KPIs with live data
+            // Total Birds
+            if (data.total !== undefined) {
+                document.getElementById('kpiTotalBirds').textContent = data.total;
+            }
+
+            // Health Score
+            if (data.healthScore !== undefined) {
+                document.getElementById('kpiHealthScore').textContent = `${data.healthScore.toFixed(1)}%`;
+
+                // Update trend based on health
+                const healthTrend = document.getElementById('kpiHealthTrend');
+                if (healthTrend) {
+                    if (data.healthScore > 90) {
+                        healthTrend.textContent = 'Good';
+                        healthTrend.className = 'kpi-trend positive';
+                    } else if (data.healthScore > 70) {
+                        healthTrend.textContent = 'Stable';
+                        healthTrend.className = 'kpi-trend';
+                    } else {
+                        healthTrend.textContent = 'Critical';
+                        healthTrend.className = 'kpi-trend negative';
+                    }
+                }
+            }
+
+            // Interventions (Quarantined)
+            if (data.quarantine !== undefined) {
+                document.getElementById('kpiInterventions').textContent = data.quarantine;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // KPI UPDATES
+        // ═══════════════════════════════════════════════════════════════
+        function updateKPIs() {
+            if (sessions.length === 0) {
+                document.getElementById('kpiTotalBirds').textContent = '0';
+                document.getElementById('kpiHealthScore').textContent = '0%';
+                document.getElementById('kpiInterventions').textContent = '0';
+                document.getElementById('kpiRecoveryRate').textContent = '0%';
+                return;
+            }
+
+            const filteredSessions = filterSessionsByRange(sessions);
+
+            // Total birds (from most recent session)
+            const latestSession = filteredSessions[0];
+            const totalBirds = latestSession?.summary?.totalBirds || 0;
+            document.getElementById('kpiTotalBirds').textContent = totalBirds;
+
+            // Average health score
+            const avgHealth = filteredSessions.reduce((sum, s) => {
+                return sum + parseFloat(s.summary?.avgHealthScore || 0);
+            }, 0) / filteredSessions.length;
+            document.getElementById('kpiHealthScore').textContent = `${avgHealth.toFixed(1)}%`;
+
+            // Total interventions
+            const totalInterventions = filteredSessions.reduce((sum, s) => {
+                return sum + (s.summary?.quarantined || 0);
+            }, 0);
+            document.getElementById('kpiInterventions').textContent = totalInterventions;
+
+            // Recovery rate (simulated)
+            const recoveryRate = Math.min(100, 75 + Math.random() * 20);
+            document.getElementById('kpiRecoveryRate').textContent = `${recoveryRate.toFixed(1)}%`;
+
+            // Trends
+            updateTrends(filteredSessions);
+        }
+
+        function updateTrends(filteredSessions) {
+            // Simulated trends
+            document.getElementById('kpiTotalTrend').textContent = '+2 ↑';
+            document.getElementById('kpiTotalTrend').className = 'kpi-trend positive';
+
+            document.getElementById('kpiHealthTrend').textContent = '+3.2% ↑';
+            document.getElementById('kpiHealthTrend').className = 'kpi-trend positive';
+
+            document.getElementById('kpiInterventionTrend').textContent = '-2 ↓';
+            document.getElementById('kpiInterventionTrend').className = 'kpi-trend positive';
+
+            document.getElementById('kpiRecoveryTrend').textContent = '+5% ↑';
+            document.getElementById('kpiRecoveryTrend').className = 'kpi-trend positive';
+        }
+
+        function filterSessionsByRange(allSessions) {
+            const now = new Date();
+            let startDate;
+
+            switch (selectedRange) {
+                case 'today':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    break;
+                case '7days':
+                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case '30days':
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                default:
+                    startDate = new Date(0);
+            }
+
+            return allSessions.filter(s => new Date(s.startTime) >= startDate);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CHART INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        function initCharts() {
+            initHealthTrendsChart();
+            initSymptomChart();
+            initRiskDistributionChart();
+            initTemperatureChart();
+            initInterventionChart();
+            initSpatialHeatmap();
+            initActivityTimeline();
+        }
+
+        function initHealthTrendsChart() {
+            const ctx = document.getElementById('healthTrendsChart').getContext('2d');
+
+            charts.healthTrends = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: generateTimeLabels(7),
+                    datasets: [
+                        {
+                            label: 'Healthy',
+                            data: generateRandomData(7, 80, 95),
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Warning',
+                            data: generateRandomData(7, 3, 12),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Critical',
+                            data: generateRandomData(7, 0, 5),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(74, 222, 128, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(74, 222, 128, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initSymptomChart() {
+            const ctx = document.getElementById('symptomChart').getContext('2d');
+
+            charts.symptoms = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lethargy', 'Wing Droop', 'Reduced Movement', 'Isolation', 'Other'],
+                    datasets: [{
+                        data: [35, 25, 20, 15, 5],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#3b82f6',
+                            '#a855f7',
+                            '#6b7280'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initRiskDistributionChart() {
+            const ctx = document.getElementById('riskDistributionChart').getContext('2d');
+
+            charts.riskDistribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-0.2', '0.2-0.4', '0.4-0.6', '0.6-0.8', '0.8-1.0'],
+                    datasets: [{
+                        label: 'Birds',
+                        data: [150, 60, 25, 12, 3],
+                        backgroundColor: [
+                            '#22c55e',
+                            '#84cc16',
+                            '#f59e0b',
+                            '#f97316',
+                            '#ef4444'
+                        ],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(74, 222, 128, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initTemperatureChart() {
+            const ctx = document.getElementById('temperatureChart').getContext('2d');
+
+            charts.temperature = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: generateTimeLabels(24, 'hour'),
+                    datasets: [
+                        {
+                            label: 'Avg Temp',
+                            data: generateRandomData(24, 40.5, 41.5),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Max Temp',
+                            data: generateRandomData(24, 41.5, 42.5),
+                            borderColor: '#ef4444',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Min Temp',
+                            data: generateRandomData(24, 39.5, 40.5),
+                            borderColor: '#22c55e',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 38,
+                            max: 44,
+                            grid: {
+                                color: 'rgba(74, 222, 128, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(74, 222, 128, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initInterventionChart() {
+            const ctx = document.getElementById('interventionChart').getContext('2d');
+
+            charts.intervention = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Successful Recovery', 'In Treatment', 'Pending'],
+                    datasets: [{
+                        data: [75, 20, 5],
+                        backgroundColor: [
+                            '#22c55e',
+                            '#f59e0b',
+                            '#6b7280'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initSpatialHeatmap() {
+            const canvas = document.getElementById('spatialHeatmap');
+            const ctx = canvas.getContext('2d');
+
+            // Draw farm layout with heatmap
+            function drawHeatmap() {
+                const width = canvas.width = canvas.parentElement.clientWidth;
+                const height = canvas.height = 300;
+
+                // Background
+                ctx.fillStyle = '#0a0f0d';
+                ctx.fillRect(0, 0, width, height);
+
+                // Farm boundary
+                const padding = 40;
+                const farmWidth = width - padding * 2;
+                const farmHeight = height - padding * 2;
+
+                ctx.strokeStyle = 'rgba(74, 222, 128, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(padding, padding, farmWidth * 0.75, farmHeight);
+
+                // Quarantine boundary
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+                ctx.strokeRect(padding + farmWidth * 0.78, padding + farmHeight * 0.25, farmWidth * 0.2, farmHeight * 0.5);
+
+                // Labels
+                ctx.fillStyle = 'rgba(74, 222, 128, 0.7)';
+                ctx.font = '10px Inter';
+                ctx.fillText('MAIN FARM', padding + 5, padding + 15);
+
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+                ctx.fillText('QUARANTINE', padding + farmWidth * 0.78 + 5, padding + farmHeight * 0.25 + 15);
+
+                // Heatmap spots (simulated alert locations)
+                const hotspots = [
+                    { x: 0.3, y: 0.4, intensity: 0.8 },
+                    { x: 0.5, y: 0.6, intensity: 0.6 },
+                    { x: 0.2, y: 0.7, intensity: 0.4 },
+                    { x: 0.6, y: 0.3, intensity: 0.5 },
+                    { x: 0.4, y: 0.8, intensity: 0.3 }
+                ];
+
+                hotspots.forEach(spot => {
+                    const x = padding + spot.x * farmWidth * 0.75;
+                    const y = padding + spot.y * farmHeight;
+                    const radius = 40 + spot.intensity * 30;
+
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    gradient.addColorStop(0, `rgba(239, 68, 68, ${spot.intensity})`);
+                    gradient.addColorStop(0.5, `rgba(245, 158, 11, ${spot.intensity * 0.5})`);
+                    gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Legend
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Inter';
+                ctx.fillText('High Alert Density', width - 120, height - 30);
+
+                const legendGradient = ctx.createLinearGradient(width - 120, 0, width - 20, 0);
+                legendGradient.addColorStop(0, 'rgba(245, 158, 11, 0.3)');
+                legendGradient.addColorStop(1, 'rgba(239, 68, 68, 0.8)');
+                ctx.fillStyle = legendGradient;
+                ctx.fillRect(width - 120, height - 20, 100, 10);
+            }
+
+            drawHeatmap();
+            window.addEventListener('resize', drawHeatmap);
+        }
+
+        function initActivityTimeline() {
+            const ctx = document.getElementById('activityTimeline').getContext('2d');
+
+            charts.activity = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                    datasets: [
+                        {
+                            label: 'Alerts',
+                            data: [1, 0, 0, 2, 5, 8, 6, 7, 9, 5, 3, 2],
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Interventions',
+                            data: [0, 0, 0, 1, 2, 3, 2, 3, 4, 2, 1, 1],
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(74, 222, 128, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // HELPER FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        function generateTimeLabels(count, type = 'day') {
+            const labels = [];
+            const now = new Date();
+
+            for (let i = count - 1; i >= 0; i--) {
+                if (type === 'day') {
+                    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                    labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+                } else if (type === 'hour') {
+                    const hour = (now.getHours() - i + 24) % 24;
+                    labels.push(`${hour.toString().padStart(2, '0')}:00`);
+                }
+            }
+
+            return labels;
+        }
+
+        function generateRandomData(count, min, max) {
+            return Array.from({ length: count }, () =>
+                Math.random() * (max - min) + min
+            );
+        }
+
+        function updateCharts() {
+            // Update all charts with new data based on selected range
+            const filteredSessions = filterSessionsByRange(sessions);
+
+            // Update health trends
+            if (charts.healthTrends) {
+                const days = selectedRange === 'today' ? 1 : selectedRange === '7days' ? 7 : 30;
+                charts.healthTrends.data.labels = generateTimeLabels(days);
+                charts.healthTrends.data.datasets[0].data = generateRandomData(days, 80, 95);
+                charts.healthTrends.data.datasets[1].data = generateRandomData(days, 3, 12);
+                charts.healthTrends.data.datasets[2].data = generateRandomData(days, 0, 5);
+                charts.healthTrends.update();
+            }
+
+            updateKPIs();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SESSIONS TABLE
+        // ═══════════════════════════════════════════════════════════════
+        function renderSessionsTable() {
+            const tbody = document.getElementById('sessionsTableBody');
+
+            if (sessions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-table">
+                            No sessions recorded yet. Start a monitoring session in the Demo page.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = sessions.slice(0, 20).map(session => {
+                const startTime = new Date(session.startTime);
+                const duration = formatDuration(session.duration || 0);
+                const summary = session.summary || {};
+
+                return `
+                    <tr>
+                        <td><span class="session-id">${session.id?.replace('session_', 'S-').substring(0, 15) || 'N/A'}</span></td>
+                        <td>${startTime.toLocaleDateString()}</td>
+                        <td>${duration}</td>
+                        <td>${summary.totalBirds || '--'}</td>
+                        <td>
+                            <span class="health-badge ${getHealthClass(summary.avgHealthScore)}">
+                                ${summary.avgHealthScore || '--'}%
+                            </span>
+                        </td>
+                        <td>${session.alerts?.length || 0}</td>
+                        <td>${summary.quarantined || 0}</td>
+                        <td>${summary.avgTemperature || '--'}°C</td>
+                        <td>
+                            <button class="btn-icon" onclick="viewSession('${session.id}')" title="View">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            if (hours > 0) {
+                return `${hours}h ${minutes % 60}m`;
+            }
+            return `${minutes}m ${seconds % 60}s`;
+        }
+
+        function getHealthClass(score) {
+            if (!score) return '';
+            const num = parseFloat(score);
+            if (num >= 80) return 'healthy';
+            if (num >= 50) return 'warning';
+            return 'critical';
+        }
+
+        function filterSessions() {
+            const search = document.getElementById('sessionSearch').value.toLowerCase();
+            const filter = document.getElementById('sessionFilter').value;
+
+            let filtered = sessions;
+
+            if (search) {
+                filtered = filtered.filter(s =>
+                    s.id?.toLowerCase().includes(search) ||
+                    new Date(s.startTime).toLocaleDateString().includes(search)
+                );
+            }
+
+            if (filter === 'alerts') {
+                filtered = filtered.filter(s => (s.alerts?.length || 0) > 0);
+            } else if (filter === 'interventions') {
+                filtered = filtered.filter(s => (s.summary?.quarantined || 0) > 0);
+            }
+
+            // Re-render with filtered data
+            const originalSessions = sessions;
+            sessions = filtered;
+            renderSessionsTable();
+            sessions = originalSessions;
+        }
+
+        function viewSession(sessionId) {
+            window.location.href = `sessions.html?play=${sessionId}`;
+        }
+
+        function exportReport() {
+            // Generate CSV report
+            const headers = ['Session ID', 'Date', 'Duration', 'Birds', 'Health Score', 'Alerts', 'Interventions', 'Avg Temp'];
+            const rows = sessions.map(s => [
+                s.id,
+                new Date(s.startTime).toISOString(),
+                formatDuration(s.duration || 0),
+                s.summary?.totalBirds || 0,
+                s.summary?.avgHealthScore || 0,
+                s.alerts?.length || 0,
+                s.summary?.quarantined || 0,
+                s.summary?.avgTemperature || 0
+            ]);
+
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chicken-twin-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+    <script>
+        // Init Analytics with live data
+        function initAnalytics() {
+            updateAnalytics();
+
+            window.addEventListener('sessionUpdate', () => {
+                updateAnalytics();
+            });
+
+            setInterval(updateAnalytics, 1000);
+        }
+
+        function updateAnalytics() {
+            if (!sessionManager || !sessionManager.isActive()) return;
+
+            const state = sessionManager.state;
+            const stats = state.stats;
+
+            if (stats) {
+                // Update KPIs
+                setText('kpiTotalBirds', stats.total);
+                setText('kpiAvgrisk', (1 - stats.healthScore / 100).toFixed(2));
+
+                // Update trend indicators (simple logic for demo)
+                const trend = stats.healthScore > 90 ? 'positive' : 'negative';
+                const el = document.getElementById('kpiHealthTrend');
+                if (el) {
+                    el.className = `kpi-trend ${trend}`;
+                    el.textContent = trend === 'positive' ? '+2.4%' : '-1.5%';
+                }
+            }
+        }
+
+        function setText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        initAnalytics();
+    </script>
+</body>
+
+</html>

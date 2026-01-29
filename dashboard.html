@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | CHICKEN TWIN - AI-Powered Poultry Robotics</title>
+    <link rel="icon" type="image/x-icon" href="fav.ico">
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/session_manager.js"></script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar scrolled">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="fav.ico" alt="Chicken Twin Logo" class="logo-icon">
+                <span class="logo-text">CHICKEN TWIN</span>
+            </a>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="demo.html" class="nav-link">Demo</a></li>
+                <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="sessions.html" class="nav-link">Sessions</a></li>
+                <li><a href="analytics.html" class="nav-link">Analytics</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="hero-glow"></div>
+        <div class="container">
+            <div class="page-header-content">
+                <span class="section-tag">Real-time Analytics</span>
+                <h1 class="page-title">Live Dashboard</h1>
+                <p class="page-subtitle">Monitor your flock health and thermal data in real-time</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Content -->
+    <section class="dashboard-section">
+        <div class="container">
+            <!-- Session Status Banner -->
+            <div class="session-banner" id="sessionBanner">
+                <div class="banner-content">
+                    <div class="banner-status">
+                        <span class="banner-icon" id="bannerIcon">⏸️</span>
+                        <div class="banner-text-group">
+                            <span class="banner-title" id="bannerTitle">No Active Session</span>
+                            <span class="banner-subtitle" id="bannerSubtitle">Start a session in the Demo page to see
+                                live data</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="demo.html" class="btn btn-primary btn-sm" id="goToDemoBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Go to Demo
+                </a>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="dashboard-stats-grid">
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon green">🐔</div>
+                    <div class="dash-stat-content">
+                        <span class="dash-stat-value" id="dashTotalBirds">0</span>
+                        <span class="dash-stat-label">Total Birds</span>
+                    </div>
+                    <div class="dash-stat-trend" id="trendTotal">--</div>
+                </div>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon blue">❤️</div>
+                    <div class="dash-stat-content">
+                        <span class="dash-stat-value" id="dashHealthScore">0%</span>
+                        <span class="dash-stat-label">Health Score</span>
+                    </div>
+                    <div class="dash-stat-trend healthy" id="trendHealth">--</div>
+                </div>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon orange">🌡️</div>
+                    <div class="dash-stat-content">
+                        <span class="dash-stat-value" id="dashAvgTemp">--°C</span>
+                        <span class="dash-stat-label">Avg Temperature</span>
+                    </div>
+                    <div class="dash-stat-trend" id="trendTemp">--</div>
+                </div>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon red">🏥</div>
+                    <div class="dash-stat-content">
+                        <span class="dash-stat-value" id="dashQuarantine">0</span>
+                        <span class="dash-stat-label">In Quarantine</span>
+                    </div>
+                    <div class="dash-stat-trend warning" id="trendQuarantine">--</div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Flock Health Distribution -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <h3>🐔 Flock Health Distribution</h3>
+                        <span class="live-badge" id="healthLiveBadge">
+                            <span class="live-dot"></span>
+                            Live
+                        </span>
+                    </div>
+                    <div class="dash-card-content">
+                        <div class="health-distribution">
+                            <div class="health-bar-container">
+                                <div class="health-bar healthy" id="healthBarHealthy" style="width: 0%"></div>
+                                <div class="health-bar warning" id="healthBarWarning" style="width: 0%"></div>
+                                <div class="health-bar critical" id="healthBarCritical" style="width: 0%"></div>
+                                <div class="health-bar quarantine" id="healthBarQuarantine" style="width: 0%"></div>
+                            </div>
+                            <div class="health-legend">
+                                <div class="legend-item">
+                                    <span class="legend-color healthy"></span>
+                                    <span>Healthy: <strong id="healthyCount">0</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color warning"></span>
+                                    <span>Warning: <strong id="warningCount">0</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color critical"></span>
+                                    <span>Critical: <strong id="criticalCount">0</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color quarantine"></span>
+                                    <span>Quarantine: <strong id="quarantineCount">0</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Temperature Overview -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <h3>🌡️ Temperature Overview</h3>
+                    </div>
+                    <div class="dash-card-content">
+                        <div class="temp-display">
+                            <div class="temp-gauge-vertical">
+                                <div class="gauge-track">
+                                    <div class="gauge-fill-vertical" id="tempGaugeFill"></div>
+                                    <div class="gauge-marker" id="tempMarker"></div>
+                                </div>
+                                <div class="gauge-labels">
+                                    <span>45°C</span>
+                                    <span>40°C</span>
+                                    <span>35°C</span>
+                                </div>
+                            </div>
+                            <div class="temp-stats-vertical">
+                                <div class="temp-stat">
+                                    <span class="temp-stat-value" id="tempAvg">--°C</span>
+                                    <span class="temp-stat-label">Average</span>
+                                </div>
+                                <div class="temp-stat">
+                                    <span class="temp-stat-value" id="tempMin">--°C</span>
+                                    <span class="temp-stat-label">Minimum</span>
+                                </div>
+                                <div class="temp-stat">
+                                    <span class="temp-stat-value" id="tempMax">--°C</span>
+                                    <span class="temp-stat-label">Maximum</span>
+                                </div>
+                                <div class="temp-stat">
+                                    <span class="temp-stat-value" id="tempRange">--°C</span>
+                                    <span class="temp-stat-label">Range</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Robot Status -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <h3>🤖 Robot Status</h3>
+                    </div>
+                    <div class="dash-card-content">
+                        <div class="robot-status-card">
+                            <div class="robot-visual">
+                                <div class="robot-icon" id="robotIcon">🤖</div>
+                                <div class="robot-status-indicator" id="robotIndicator"></div>
+                            </div>
+                            <div class="robot-info">
+                                <div class="robot-info-row">
+                                    <span class="info-label">Status</span>
+                                    <span class="info-value" id="robotStatusText">Offline</span>
+                                </div>
+                                <div class="robot-info-row">
+                                    <span class="info-label">Position</span>
+                                    <span class="info-value" id="robotPosition">--</span>
+                                </div>
+                                <div class="robot-info-row">
+                                    <span class="info-label">Quarantine Temp</span>
+                                    <span class="info-value" id="quarantineTempDisplay">--°C</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Alerts -->
+                <div class="dash-card full-width">
+                    <div class="dash-card-header">
+                        <h3>⚠️ Health Alerts</h3>
+                        <span class="alert-count-badge" id="alertCountBadge">0</span>
+                    </div>
+                    <div class="dash-card-content">
+                        <div class="alerts-table-container" id="alertsContainer">
+                            <table class="alerts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Session</th>
+                                        <th>Bird ID</th>
+                                        <th>Alert Type</th>
+                                        <th>Temperature</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertsTableBody">
+                                    <tr class="no-data">
+                                        <td colspan="6">
+                                            <div class="empty-alerts">
+                                                <span class="empty-icon">✅</span>
+                                                <span>No alerts. All birds are healthy!</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <img src="fav.ico" alt="Chicken Twin Logo" class="logo-icon">
+                        <span class="logo-text">CHICKEN TWIN</span>
+                    </a>
+                    <p>Revolutionizing poultry farming with AI-powered robotics. Built with ❤️ for the Surge X Lablab.ai
+                        Hackathon.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Navigation</h4>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="demo.html">Demo</a></li>
+                            <li><a href="dashboard.html">Dashboard</a></li>
+                            <li><a href="sessions.html">Sessions</a></li>
+                            <li><a href="analytics.html">Analytics</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CHICKEN TWIN. All rights reserved.</p>
+                <p>A Surge X Lablab.ai Hackathon Project</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ===== DASHBOARD - Real-time Updates =====
+        // No clear/reset buttons - data clears automatically when session stops
+
+        let updateInterval;
+        let lastData = null;
+        let ws = null;
+        let wsConnected = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDashboard();
+            startLiveUpdates();
+            initializeDashboard();
+            startLiveUpdates();
+            // connectWebSocket(); // Disabled to prevent reload conflicts, relying on localStorage persistence
+
+            // Mobile nav
+            document.getElementById('navToggle').addEventListener('click', () => {
+                document.getElementById('navMenu').classList.toggle('active');
+                document.getElementById('navToggle').classList.toggle('active');
+            });
+        });
+
+        // ===== WebSocket Connection for Real-time Updates =====
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+
+            try {
+                ws = new WebSocket('ws://localhost:8765');
+
+                ws.onopen = () => {
+                    console.log('🔌 Dashboard WebSocket connected');
+                    wsConnected = true;
+
+                    // Request current state
+                    ws.send(JSON.stringify({ type: 'dashboard_connect' }));
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (e) {
+                        console.error('WebSocket parse error:', e);
+                    }
+                };
+
+                ws.onclose = () => {
+                    console.log('📴 Dashboard WebSocket disconnected');
+                    wsConnected = false;
+                    // Retry connection after 3 seconds
+                    setTimeout(connectWebSocket, 3000);
+                };
+
+                ws.onerror = (error) => {
+                    console.log('WebSocket error (monitor.py may not be running)');
+                    wsConnected = false;
+                };
+            } catch (e) {
+                console.log('WebSocket connection failed:', e);
+            }
+        }
+
+        function handleWebSocketMessage(message) {
+            switch (message.type) {
+                case 'stats_update':
+                    updateFromWebSocket(message.data);
+                    break;
+                case 'alert':
+                    addAlertFromWebSocket(message.data);
+                    break;
+                case 'robot_update':
+                    updateRobotStatus(message.data);
+                    break;
+                case 'session_active':
+                    // Session is active, update UI
+                    const banner = document.getElementById('sessionBanner');
+                    if (banner) banner.classList.add('active');
+                    break;
+            }
+        }
+
+        function updateFromWebSocket(data) {
+            if (!data) return;
+
+            // Update stats from WebSocket data
+            document.getElementById('dashTotalBirds').textContent = data.total || 0;
+            document.getElementById('dashHealthScore').textContent = `${data.healthScore || 0}%`;
+            document.getElementById('dashQuarantine').textContent = data.quarantine || 0;
+
+            if (data.avgTemp) {
+                document.getElementById('dashAvgTemp').textContent = `${data.avgTemp.toFixed(1)}°C`;
+            }
+
+            // Health distribution
+            const total = data.total || 1;
+            document.getElementById('healthBarHealthy').style.width = `${((data.healthy || 0) / total * 100)}%`;
+            document.getElementById('healthBarWarning').style.width = `${((data.warning || 0) / total * 100)}%`;
+            document.getElementById('healthBarCritical').style.width = `${((data.critical || 0) / total * 100)}%`;
+            document.getElementById('healthBarQuarantine').style.width = `${((data.quarantine || 0) / total * 100)}%`;
+
+            document.getElementById('healthyCount').textContent = data.healthy || 0;
+            document.getElementById('warningCount').textContent = data.warning || 0;
+            document.getElementById('criticalCount').textContent = data.critical || 0;
+            document.getElementById('quarantineCount').textContent = data.quarantine || 0;
+        }
+
+        function addAlertFromWebSocket(alertData) {
+            if (!alertData) return;
+            const alerts = JSON.parse(localStorage.getItem('chickenTwin_alerts') || '[]');
+            alerts.unshift(alertData);
+            localStorage.setItem('chickenTwin_alerts', JSON.stringify(alerts.slice(0, 50)));
+            updateAlertsTable(alerts);
+            document.getElementById('alertCountBadge').textContent = alerts.length;
+        }
+
+        function updateRobotStatus(data) {
+            if (!data) return;
+            document.getElementById('robotStatusText').textContent = (data.status || 'idle').replace(/_/g, ' ').toUpperCase();
+            if (data.position) {
+                document.getElementById('robotPosition').textContent = data.position;
+            }
+        }
+
+        function initializeDashboard() {
+            // First check sessionManager for active session
+            if (window.sessionManager && sessionManager.isSessionActive()) {
+                console.log('📊 Active session detected via sessionManager');
+                const state = sessionManager.getState();
+
+                // Show active session indicator
+                const banner = document.getElementById('sessionBanner');
+                if (banner) banner.classList.add('active');
+
+                const bannerIcon = document.getElementById('bannerIcon');
+                const bannerTitle = document.getElementById('bannerTitle');
+                const bannerSubtitle = document.getElementById('bannerSubtitle');
+                const healthLiveBadge = document.getElementById('healthLiveBadge');
+
+                if (bannerIcon) bannerIcon.textContent = '🟢';
+                if (bannerTitle) bannerTitle.textContent = 'Session Active';
+                if (bannerSubtitle) bannerSubtitle.textContent = `Recording in progress • Session ${state.sessionId || ''}`;
+                if (healthLiveBadge) healthLiveBadge.classList.add('active');
+
+                // Update stats from sessionManager
+                const stats = sessionManager.getStats();
+                if (stats && stats.total > 0) {
+                    document.getElementById('dashTotalBirds').textContent = stats.total || 0;
+                    document.getElementById('dashHealthScore').textContent = `${stats.healthScore || 0}%`;
+                    document.getElementById('dashQuarantine').textContent = stats.quarantine || 0;
+
+                    const total = stats.total || 1;
+                    document.getElementById('healthBarHealthy').style.width = `${(stats.healthy / total * 100)}%`;
+                    document.getElementById('healthBarWarning').style.width = `${(stats.warning / total * 100)}%`;
+                    document.getElementById('healthBarCritical').style.width = `${(stats.critical / total * 100)}%`;
+                    document.getElementById('healthBarQuarantine').style.width = `${(stats.quarantine / total * 100)}%`;
+
+                    document.getElementById('healthyCount').textContent = stats.healthy || 0;
+                    document.getElementById('warningCount').textContent = stats.warning || 0;
+                    document.getElementById('criticalCount').textContent = stats.critical || 0;
+                    document.getElementById('quarantineCount').textContent = stats.quarantine || 0;
+                }
+
+                // Load alerts from sessionManager
+                const alerts = sessionManager.getAlerts();
+                if (alerts && alerts.length > 0) {
+                    updateAlertsTable(alerts);
+                    document.getElementById('alertCountBadge').textContent = alerts.length;
+                }
+
+                return; // Active session found
+            }
+
+            // Fallback: Check localStorage for active session
+            const liveData = JSON.parse(localStorage.getItem('chickenTwin_dashboard') || '{}');
+
+            if (liveData.active) {
+                updateDashboard();
+            } else {
+                // Load historical data from saved sessions
+                loadHistoricalData();
+            }
+        }
+
+        async function loadHistoricalData() {
+            // Try to load from saved sessions
+            const sessions = JSON.parse(localStorage.getItem('chickenTwin_sessions') || '[]');
+
+            if (sessions.length > 0) {
+                // Get the most recent session
+                const latestSession = sessions[0];
+                if (latestSession.summary) {
+                    displayHistoricalStats(latestSession);
+                    return;
+                }
+            }
+
+            // Try to fetch from server
+            try {
+                const response = await fetch('/api/analytics/summary');
+                if (response.ok) {
+                    const data = await response.json();
+                    displayServerStats(data);
+                    return;
+                }
+            } catch (e) {
+                console.log('Server not available, showing empty state');
+            }
+
+            // Show empty state with historical data prompt
+            showHistoricalEmptyState();
+        }
+
+        function displayHistoricalStats(session) {
+            const summary = session.summary;
+            const banner = document.getElementById('sessionBanner');
+            const bannerIcon = document.getElementById('bannerIcon');
+            const bannerTitle = document.getElementById('bannerTitle');
+            const bannerSubtitle = document.getElementById('bannerSubtitle');
+            const healthLiveBadge = document.getElementById('healthLiveBadge');
+
+            banner.classList.remove('active');
+            bannerIcon.textContent = '📊';
+            bannerTitle.textContent = 'Showing Last Session Data';
+            const duration = Math.round((summary.duration || 0) / 1000);
+            bannerSubtitle.textContent = `Session: ${session.id.replace('session_', '')} • Duration: ${Math.floor(duration / 60)}m ${duration % 60}s`;
+            healthLiveBadge.classList.remove('active');
+
+            // Stats from last session
+            document.getElementById('dashTotalBirds').textContent = summary.totalBirds || 0;
+            document.getElementById('dashHealthScore').textContent = summary.avgHealthScore ? `${summary.avgHealthScore}%` : '0%';
+            document.getElementById('dashAvgTemp').textContent = summary.avgTemperature ? `${parseFloat(summary.avgTemperature).toFixed(1)}°C` : '--°C';
+            document.getElementById('dashQuarantine').textContent = summary.quarantined || 0;
+
+            // Health distribution (estimate from health score)
+            const healthScore = parseFloat(summary.avgHealthScore) || 0;
+            const total = summary.totalBirds || 0;
+            const quarantine = summary.quarantined || 0;
+            const inFarm = total - quarantine;
+            const healthyEst = Math.round(inFarm * healthScore / 100);
+            const warningEst = Math.round(inFarm * 0.1);
+            const criticalEst = inFarm - healthyEst - warningEst;
+
+            const healthyPct = total > 0 ? (healthyEst / total * 100) : 0;
+            const warningPct = total > 0 ? (warningEst / total * 100) : 0;
+            const criticalPct = total > 0 ? (Math.max(0, criticalEst) / total * 100) : 0;
+            const quarantinePct = total > 0 ? (quarantine / total * 100) : 0;
+
+            document.getElementById('healthBarHealthy').style.width = `${healthyPct}%`;
+            document.getElementById('healthBarWarning').style.width = `${warningPct}%`;
+            document.getElementById('healthBarCritical').style.width = `${criticalPct}%`;
+            document.getElementById('healthBarQuarantine').style.width = `${quarantinePct}%`;
+
+            document.getElementById('healthyCount').textContent = healthyEst;
+            document.getElementById('warningCount').textContent = warningEst;
+            document.getElementById('criticalCount').textContent = Math.max(0, criticalEst);
+            document.getElementById('quarantineCount').textContent = quarantine;
+
+            // Temperature
+            document.getElementById('tempAvg').textContent = summary.avgTemperature ? `${parseFloat(summary.avgTemperature).toFixed(1)}°C` : '--°C';
+            document.getElementById('tempMin').textContent = summary.minTemperature ? `${parseFloat(summary.minTemperature).toFixed(1)}°C` : '--°C';
+            document.getElementById('tempMax').textContent = summary.maxTemperature ? `${parseFloat(summary.maxTemperature).toFixed(1)}°C` : '--°C';
+
+            if (summary.minTemperature && summary.maxTemperature) {
+                const range = parseFloat(summary.maxTemperature) - parseFloat(summary.minTemperature);
+                document.getElementById('tempRange').textContent = `${range.toFixed(1)}°C`;
+            }
+
+            // Robot status (from historical)
+            document.getElementById('robotStatusText').textContent = 'Session Ended';
+            document.getElementById('robotPosition').textContent = '--';
+            document.getElementById('quarantineTempDisplay').textContent = '--°C';
+            document.getElementById('robotIndicator').className = 'robot-status-indicator';
+
+            // Load alerts from this session
+            const alerts = JSON.parse(localStorage.getItem('chickenTwin_alerts') || '[]');
+            const sessionAlerts = alerts.filter(a => a.sessionId === session.id);
+            updateAlertsTable(sessionAlerts);
+            document.getElementById('alertCountBadge').textContent = sessionAlerts.length;
+        }
+
+        function displayServerStats(data) {
+            // Similar to displayHistoricalStats but from server data
+            console.log('Server data loaded:', data);
+        }
+
+        function showHistoricalEmptyState() {
+            const banner = document.getElementById('sessionBanner');
+            const bannerIcon = document.getElementById('bannerIcon');
+            const bannerTitle = document.getElementById('bannerTitle');
+            const bannerSubtitle = document.getElementById('bannerSubtitle');
+
+            banner.classList.remove('active');
+            bannerIcon.textContent = 'ℹ️';
+            bannerTitle.textContent = 'No Session Data';
+            bannerSubtitle.textContent = 'Start a session in the Demo page to begin collecting data';
+
+            // Reset all values
+            resetDashboardDisplay();
+        }
+
+        function startLiveUpdates() {
+            updateInterval = setInterval(updateDashboard, 500);
+        }
+
+        function updateDashboard() {
+            const data = JSON.parse(localStorage.getItem('chickenTwin_dashboard') || '{}');
+            const alerts = JSON.parse(localStorage.getItem('chickenTwin_alerts') || '[]');
+
+            // Update session banner
+            const banner = document.getElementById('sessionBanner');
+            const bannerIcon = document.getElementById('bannerIcon');
+            const bannerTitle = document.getElementById('bannerTitle');
+            const bannerSubtitle = document.getElementById('bannerSubtitle');
+            const goToDemoBtn = document.getElementById('goToDemoBtn');
+            const healthLiveBadge = document.getElementById('healthLiveBadge');
+
+            if (data.active) {
+                banner.classList.add('active');
+                bannerIcon.textContent = '🟢';
+                bannerTitle.textContent = 'Session Active';
+                bannerSubtitle.textContent = `Recording in progress • Session ${data.sessionId ? data.sessionId.replace('session_', '') : ''}`;
+                goToDemoBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    View Live
+                `;
+                healthLiveBadge.classList.add('active');
+
+                // Update stats
+                updateActiveSessionStats(data, alerts);
+            } else if (!lastData || lastData.active) {
+                // Session just ended or no session - load historical
+                loadHistoricalData();
+            }
+
+            lastData = data;
+        }
+
+        function updateActiveSessionStats(data, alerts) {
+            const total = (data.healthy || 0) + (data.warning || 0) + (data.critical || 0) + (data.quarantine || 0);
+
+            // Main stats
+            document.getElementById('dashTotalBirds').textContent = total;
+            document.getElementById('dashHealthScore').textContent = data.healthScore ? `${parseFloat(data.healthScore).toFixed(1)}%` : '0%';
+            document.getElementById('dashAvgTemp').textContent = data.avgTemp ? `${data.avgTemp.toFixed(1)}°C` : '--°C';
+            document.getElementById('dashQuarantine').textContent = data.quarantine || 0;
+
+            // Health distribution
+            const healthyPct = total > 0 ? ((data.healthy || 0) / total * 100) : 0;
+            const warningPct = total > 0 ? ((data.warning || 0) / total * 100) : 0;
+            const criticalPct = total > 0 ? ((data.critical || 0) / total * 100) : 0;
+            const quarantinePct = total > 0 ? ((data.quarantine || 0) / total * 100) : 0;
+
+            document.getElementById('healthBarHealthy').style.width = `${healthyPct}%`;
+            document.getElementById('healthBarWarning').style.width = `${warningPct}%`;
+            document.getElementById('healthBarCritical').style.width = `${criticalPct}%`;
+            document.getElementById('healthBarQuarantine').style.width = `${quarantinePct}%`;
+
+            document.getElementById('healthyCount').textContent = data.healthy || 0;
+            document.getElementById('warningCount').textContent = data.warning || 0;
+            document.getElementById('criticalCount').textContent = data.critical || 0;
+            document.getElementById('quarantineCount').textContent = data.quarantine || 0;
+
+            // Temperature gauge
+            const avgTemp = data.avgTemp || 40;
+            const gaugePct = Math.max(0, Math.min(100, (avgTemp - 35) / 10 * 100));
+            document.getElementById('tempGaugeFill').style.height = `${gaugePct}%`;
+            document.getElementById('tempMarker').style.bottom = `${gaugePct}%`;
+
+            document.getElementById('tempAvg').textContent = data.avgTemp ? `${data.avgTemp.toFixed(1)}°C` : '--°C';
+            document.getElementById('tempMin').textContent = data.minTemp ? `${data.minTemp.toFixed(1)}°C` : '--°C';
+            document.getElementById('tempMax').textContent = data.maxTemp ? `${data.maxTemp.toFixed(1)}°C` : '--°C';
+
+            if (data.minTemp && data.maxTemp) {
+                document.getElementById('tempRange').textContent = `${(data.maxTemp - data.minTemp).toFixed(1)}°C`;
+            }
+
+            // Robot status
+            document.getElementById('robotStatusText').textContent = (data.robotStatus || 'idle').replace(/_/g, ' ').toUpperCase();
+            document.getElementById('robotPosition').textContent = data.robotPosition || '--';
+            document.getElementById('quarantineTempDisplay').textContent = data.quarantineTemp ? `${data.quarantineTemp.toFixed(1)}°C` : '--°C';
+
+            const robotIndicator = document.getElementById('robotIndicator');
+            robotIndicator.className = 'robot-status-indicator ' + (data.robotStatus === 'idle' ? 'idle' : 'active');
+
+            // Alerts
+            updateAlertsTable(alerts);
+            document.getElementById('alertCountBadge').textContent = alerts.length;
+        }
+
+        function resetDashboardDisplay() {
+            // Reset all values to zero/empty
+            document.getElementById('dashTotalBirds').textContent = '0';
+            document.getElementById('dashHealthScore').textContent = '0%';
+            document.getElementById('dashAvgTemp').textContent = '--°C';
+            document.getElementById('dashQuarantine').textContent = '0';
+
+            document.getElementById('healthBarHealthy').style.width = '0%';
+            document.getElementById('healthBarWarning').style.width = '0%';
+            document.getElementById('healthBarCritical').style.width = '0%';
+            document.getElementById('healthBarQuarantine').style.width = '0%';
+
+            document.getElementById('healthyCount').textContent = '0';
+            document.getElementById('warningCount').textContent = '0';
+            document.getElementById('criticalCount').textContent = '0';
+            document.getElementById('quarantineCount').textContent = '0';
+
+            document.getElementById('tempGaugeFill').style.height = '0%';
+            document.getElementById('tempMarker').style.bottom = '0%';
+            document.getElementById('tempAvg').textContent = '--°C';
+            document.getElementById('tempMin').textContent = '--°C';
+            document.getElementById('tempMax').textContent = '--°C';
+            document.getElementById('tempRange').textContent = '--°C';
+
+            document.getElementById('robotStatusText').textContent = 'Offline';
+            document.getElementById('robotPosition').textContent = '--';
+            document.getElementById('quarantineTempDisplay').textContent = '--°C';
+            document.getElementById('robotIndicator').className = 'robot-status-indicator';
+
+            // Clear alerts table
+            document.getElementById('alertsTableBody').innerHTML = `
+                <tr class="no-data">
+                    <td colspan="6">
+                        <div class="empty-alerts">
+                            <span class="empty-icon">✅</span>
+                            <span>No alerts. All birds are healthy!</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('alertCountBadge').textContent = '0';
+        }
+
+        function updateAlertsTable(alerts) {
+            const tbody = document.getElementById('alertsTableBody');
+
+            if (!alerts || alerts.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="no-data">
+                        <td colspan="6">
+                            <div class="empty-alerts">
+                                <span class="empty-icon">✅</span>
+                                <span>No alerts. All birds are healthy!</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = alerts.slice(0, 20).map(alert => {
+                const time = new Date(alert.time);
+                const alertClass = alert.type.toLowerCase().includes('hypo') ? 'warning' : 'critical';
+                const sessionId = alert.sessionId ? alert.sessionId.replace('session_', 'S-').substring(0, 12) : 'N/A';
+
+                return `
+                    <tr class="alert-row ${alertClass}">
+                        <td>${time.toLocaleTimeString()}</td>
+                        <td><span class="session-badge">${sessionId}</span></td>
+                        <td><strong>#${alert.chickenId}</strong></td>
+                        <td><span class="alert-type-badge ${alertClass}">${alert.type}</span></td>
+                        <td>${alert.temperature.toFixed(1)}°C</td>
+                        <td><span class="action-badge">Quarantined</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            clearInterval(updateInterval);
+        });
+        // ═══════════════════════════════════════════════════════════════
+        // MINI CHARTS FOR DASHBOARD
+        // ═══════════════════════════════════════════════════════════════
+
+        let miniCharts = {};
+        let chartData = {
+            healthHistory: [],
+            tempHistory: [],
+            alertHistory: []
+        };
+        const maxDataPoints = 60; // Last 60 data points (1 minute at 1/sec)
+
+        function initMiniCharts() {
+            // Only init if Chart.js is available
+            if (typeof Chart === 'undefined') return;
+
+            // Health trend mini chart (if canvas exists)
+            const healthCanvas = document.getElementById('miniHealthChart');
+            if (healthCanvas) {
+                miniCharts.health = new Chart(healthCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false, min: 0, max: 100 }
+                        }
+                    }
+                });
+            }
+
+            // Temperature trend mini chart
+            const tempCanvas = document.getElementById('miniTempChart');
+            if (tempCanvas) {
+                miniCharts.temp = new Chart(tempCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false, min: 38, max: 44 }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateMiniCharts(data) {
+            if (!data.active) return;
+
+            const now = new Date().toLocaleTimeString();
+
+            // Update health history
+            chartData.healthHistory.push(parseFloat(data.healthScore) || 0);
+            if (chartData.healthHistory.length > maxDataPoints) {
+                chartData.healthHistory.shift();
+            }
+
+            // Update temp history
+            chartData.tempHistory.push(data.avgTemp || 40);
+            if (chartData.tempHistory.length > maxDataPoints) {
+                chartData.tempHistory.shift();
+            }
+
+            // Update charts
+            if (miniCharts.health) {
+                miniCharts.health.data.labels = chartData.healthHistory.map((_, i) => i);
+                miniCharts.health.data.datasets[0].data = chartData.healthHistory;
+                miniCharts.health.update('none');
+            }
+
+            if (miniCharts.temp) {
+                miniCharts.temp.data.labels = chartData.tempHistory.map((_, i) => i);
+                miniCharts.temp.data.datasets[0].data = chartData.tempHistory;
+                miniCharts.temp.update('none');
+            }
+        }
+
+        // Initialize charts on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initMiniCharts, 500);
+        });
+
+        // Modify the existing updateDashboard to also update charts and integrate session manager
+        const originalUpdateDashboard = updateDashboard;
+        updateDashboard = function () {
+            // Check session manager first for active session
+            if (window.sessionManager && sessionManager.isActive()) {
+                const state = sessionManager.state;
+                const stats = state.stats;
+
+                // Show active banner
+                const banner = document.getElementById('sessionBanner');
+                if (banner) banner.classList.add('active');
+
+                // Update from session manager stats
+                if (stats) {
+                    document.getElementById('dashTotalBirds').textContent = stats.total || 0;
+                    document.getElementById('dashHealthScore').textContent = `${stats.healthScore || 0}%`;
+                    document.getElementById('dashQuarantine').textContent = stats.quarantine || 0;
+
+                    const total = stats.total || 1;
+                    document.getElementById('healthBarHealthy').style.width = `${(stats.healthy / total * 100)}%`;
+                    document.getElementById('healthBarWarning').style.width = `${(stats.warning / total * 100)}%`;
+                    document.getElementById('healthBarCritical').style.width = `${(stats.critical / total * 100)}%`;
+                    document.getElementById('healthBarQuarantine').style.width = `${(stats.quarantine / total * 100)}%`;
+
+                    document.getElementById('healthyCount').textContent = stats.healthy || 0;
+                    document.getElementById('warningCount').textContent = stats.warning || 0;
+                    document.getElementById('criticalCount').textContent = stats.critical || 0;
+                    document.getElementById('quarantineCount').textContent = stats.quarantine || 0;
+                }
+            } else {
+                // Fall back to localStorage data
+                originalUpdateDashboard();
+            }
+
+            const data = JSON.parse(localStorage.getItem('chickenTwin_dashboard') || '{}');
+            updateMiniCharts(data);
+        };
+
+        // Listen for session updates from other pages
+        window.addEventListener('sessionUpdate', (e) => {
+            updateDashboard();
+        });
+
+        // Additional polling to catch cross-tab changes
+        setInterval(() => {
+            updateDashboard();
+        }, 1000);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,4082 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Demo | CHICKEN TWIN - AI-Powered Poultry Robotics</title>
+    <link rel="icon" type="image/x-icon" href="fav.ico">
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/session_manager.js"></script>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           DEMO PAGE STYLES
+           ═══════════════════════════════════════════════════════════════ */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body.demo-body {
+            background: #0a0a0a;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .demo-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #0a0a0a;
+        }
+
+        /* Navigation */
+        .demo-nav {
+            background: rgba(0, 0, 0, 0.95) !important;
+            border-bottom: 1px solid rgba(74, 222, 128, 0.2);
+            position: relative;
+            z-index: 1000;
+        }
+
+        /* Session Controls Bar */
+        .session-controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: linear-gradient(180deg, rgba(15, 20, 15, 0.98), rgba(10, 15, 10, 0.98));
+            border-bottom: 1px solid rgba(74, 222, 128, 0.3);
+            flex-shrink: 0;
+        }
+
+        .session-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .session-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #444;
+            transition: all 0.3s;
+        }
+
+        .status-dot.online {
+            background: #22c55e;
+            box-shadow: 0 0 12px #22c55e;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(0.9);
+            }
+        }
+
+        .session-timer {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 20px;
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            letter-spacing: 2px;
+        }
+
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            color: #ff4444;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+        }
+
+        .rec-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-start,
+        .btn-stop {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-start:disabled,
+        .btn-stop:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Split View */
+        .split-view {
+            display: flex;
+            flex: 1;
+            gap: 4px;
+            padding: 4px;
+            background: #000;
+            min-height: 0;
+        }
+
+        .view-panel {
+            flex: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* AI View (Live Recording) */
+        .view-panel:last-child .view-content {
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rec-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            color: #ff0000;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 16px;
+            animation: rec-blink 2s infinite;
+            /* Changed to rec-blink to avoid conflict */
+            pointer-events: none;
+        }
+
+        .rec-indicator .rec-dot {
+            /* Specificity for the new rec-dot */
+            width: 12px;
+            height: 12px;
+            background-color: #ff0000;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
+        .cctv-timestamp {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            z-index: 10;
+            text-shadow: 0 1px 2px #000;
+            pointer-events: none;
+        }
+
+        .camera-id {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            z-index: 10;
+            text-shadow: 0 1px 2px #000;
+            pointer-events: none;
+        }
+
+        @keyframes rec-blink {
+
+            /* New animation for rec-indicator */
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid rgba(74, 222, 128, 0.2);
+            flex-shrink: 0;
+        }
+
+        .view-header h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #00ffff;
+        }
+
+        .view-controls-info {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .view-content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .view-content canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Inactive Overlay */
+        .inactive-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .inactive-content {
+            text-align: center;
+        }
+
+        .inactive-icon {
+            font-size: 56px;
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        .inactive-content h3 {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .inactive-content p {
+            color: #888;
+            font-size: 13px;
+        }
+
+        /* HUD - HIDDEN - Remove black panel at top */
+        .hud-3d {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        .hud-3d.active {
+            display: none !important;
+        }
+
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .hud-label {
+            color: #666;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hud-value {
+            color: #00ffff;
+            font-weight: 600;
+        }
+
+        /* Keypoint Legend */
+        .keypoint-legend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 10px;
+            color: #fff;
+            z-index: 100;
+            display: none;
+        }
+
+        .keypoint-legend.active {
+            display: block;
+        }
+
+        .legend-title {
+            font-weight: 700;
+            color: #00ffff;
+            margin-bottom: 8px;
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.healthy {
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+        }
+
+        .legend-dot.monitoring {
+            background: #eab308;
+            box-shadow: 0 0 6px #eab308;
+        }
+
+        .legend-dot.elevated {
+            background: #f97316;
+            box-shadow: 0 0 6px #f97316;
+        }
+
+        .legend-dot.critical {
+            background: #ef4444;
+            box-shadow: 0 0 6px #ef4444;
+        }
+
+        .legend-dot.quarantine {
+            background: #06b6d4;
+            box-shadow: 0 0 6px #06b6d4;
+        }
+
+        .legend-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 8px 0;
+        }
+
+        .legend-stats {
+            font-size: 9px;
+            color: #888;
+        }
+
+        .legend-stats div {
+            margin: 3px 0;
+        }
+
+        .legend-stats strong {
+            color: #fff;
+        }
+
+        /* Live Stats Bar */
+        .live-stats-bar {
+            background: linear-gradient(180deg, rgba(10, 15, 10, 0.98), rgba(5, 10, 5, 0.98));
+            border-top: 1px solid rgba(74, 222, 128, 0.3);
+            padding: 10px 20px;
+            flex-shrink: 0;
+        }
+
+        .stats-ticker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .ticker-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .ticker-label {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ticker-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .ticker-value.healthy {
+            color: #22c55e;
+        }
+
+        .ticker-value.warning {
+            color: #eab308;
+        }
+
+        .ticker-value.critical {
+            color: #ef4444;
+        }
+
+        .ticker-value.quarantine {
+            color: #06b6d4;
+        }
+
+        .ticker-divider {
+            width: 1px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Robot Log */
+        .robot-log {
+            position: fixed;
+            bottom: 80px;
+            left: 15px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 100;
+            max-height: 200px;
+        }
+
+        .robot-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 255, 255, 0.1);
+            cursor: pointer;
+            font-size: 12px;
+            color: #00ffff;
+            font-weight: 600;
+        }
+
+        .robot-log-content {
+            padding: 8px 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .robot-log-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .robot-log-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .log-time {
+            color: #555;
+            margin-right: 8px;
+        }
+
+        /* Alert Panel */
+        .alert-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 15px;
+            width: 280px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 100;
+            max-height: 250px;
+        }
+
+        .alert-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(239, 68, 68, 0.1);
+            font-size: 12px;
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .alert-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .alert-panel-content {
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            border-left: 3px solid #ef4444;
+        }
+
+        .alert-item.warning {
+            border-left-color: #eab308;
+        }
+
+        .alert-item.info {
+            border-left-color: #3b82f6;
+        }
+
+        .alert-icon {
+            font-size: 16px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .alert-detail {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .alert-time {
+            font-size: 9px;
+            color: #555;
+        }
+
+        /* Notifications */
+        .notifications-container {
+            position: fixed;
+            bottom: 20px !important;
+            left: 20px !important;
+            right: auto !important;
+            top: auto !important;
+            z-index: 10000;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column-reverse;
+            /* Stack upwards */
+        }
+
+        .notification {
+            pointer-events: auto;
+            background: transparent;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification.success {
+            border-color: rgba(34, 197, 94, 0.5);
+        }
+
+        .notification.error {
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .notification.warning {
+            border-color: rgba(234, 179, 8, 0.5);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* View Controls */
+        .view-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .toggle-label:hover {
+            color: #fff;
+        }
+
+        .toggle-label input {
+            accent-color: #00ffff;
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .split-view {
+                flex-direction: column;
+            }
+
+            .view-panel {
+                min-height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .session-controls-bar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px 15px;
+            }
+
+            .session-info {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .stats-ticker {
+                gap: 15px;
+            }
+
+            .ticker-divider {
+                display: none;
+            }
+
+            .robot-log,
+            .alert-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="demo-body">
+    <!-- Navigation -->
+    <nav class="navbar scrolled demo-nav">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="fav.ico" alt="Chicken Twin Logo" class="logo-icon" style="width: 32px; height: 32px;">
+                <span class="logo-text" style="font-size: 16px; font-weight: 700; color: #4ade80;">CHICKEN TWIN</span>
+            </a>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="demo.html" class="nav-link active">Demo</a></li>
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="sessions.html" class="nav-link">Sessions</a></li>
+                <li><a href="analytics.html" class="nav-link">Analytics</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Demo Container -->
+    <div class="demo-container">
+        <!-- Session Controls -->
+        <div class="session-controls-bar">
+            <div class="session-info">
+                <div class="session-status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Session Inactive</span>
+                </div>
+                <div class="session-timer" id="sessionTimer">00:00:00</div>
+                <div class="recording-indicator" id="recordingIndicator">
+                    <span class="rec-dot"></span>
+                    <span>REC</span>
+                </div>
+            </div>
+            <div class="control-buttons">
+                <button class="btn-start" id="startSession"
+                    onclick="alert('Attempting to start session...'); startSession(false)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>Start Session</span>
+                </button>
+                <button class="btn-stop" id="stopSession" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="6" width="12" height="12"></rect>
+                    </svg>
+                    <span>Stop & Save</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Split View Container -->
+        <div class="split-view">
+            <!-- 3D World View (Controllable) -->
+            <div class="view-panel">
+                <div class="view-header">
+                    <h3>🎮 3D Farm View</h3>
+                    <div class="view-controls-info">WASD: Move | Mouse: Look | Scroll: Speed</div>
+                </div>
+                <div class="view-content" id="canvas3DContainer">
+                    <canvas id="canvas3D"></canvas>
+                    <div class="inactive-overlay" id="inactive3D">
+                        <div class="inactive-content">
+                            <span class="inactive-icon">🎮</span>
+                            <h3>3D Farm Simulation</h3>
+                            <p>Click "Start Session" to begin</p>
+                        </div>
+                    </div>
+                    <div class="hud-3d" id="hud3D">
+                        <div class="hud-stat">
+                            <span class="hud-label">Robot</span>
+                            <span class="hud-value" id="hudRobotStatus">Idle</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">Quarantine</span>
+                            <span class="hud-value" id="hudQuarantineCount">0</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">Q-Temp</span>
+                            <span class="hud-value" id="hudQuarantineTemp">28°C</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">Position</span>
+                            <span class="hud-value" id="hudCameraPos">0, 0, 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Vision View (Fixed Ceiling Angle with Keypoints) -->
+            <div class="view-panel">
+                <div class="view-header">
+                    <h2>🔴 LIVE RECORDING</h2>
+                </div>
+                <div class="view-content" id="aiViewContainer">
+                    <canvas id="aiViewCanvas"></canvas>
+                    <div class="rec-indicator" id="recIndicator" style="display: none;">
+                        <div class="rec-dot"></div>
+                        <span>REC</span>
+                    </div>
+                    <div class="camera-id">CAM-01 • BARN INTELLIGENCE</div>
+                    <div class="cctv-timestamp" id="cctvTimestamp">--:--:--</div>
+
+                    <div class="inactive-overlay" id="inactiveAI" style="display: none;">
+                        <div class="inactive-content">
+                            <span class="inactive-icon">🤖</span>
+                            <h3>AI Detection View</h3>
+                            <p>Start a session to view AI tracking</p>
+                        </div>
+                    </div>
+                    <div class="keypoint-legend" id="keypointLegend">
+                        <div class="legend-title">Detection Status</div>
+                        <div class="legend-item"><span class="legend-dot healthy"></span> Healthy (0-39%)</div>
+                        <div class="legend-item"><span class="legend-dot monitoring"></span> Monitoring (40-59%)</div>
+                        <div class="legend-item"><span class="legend-dot elevated"></span> Elevated (60-79%)</div>
+                        <div class="legend-item"><span class="legend-dot critical"></span> Critical (80-100%)</div>
+                        <div class="legend-item"><span class="legend-dot quarantine"></span> Quarantined</div>
+                        <div class="legend-divider"></div>
+                        <div class="legend-stats">
+                            <div>Active: <strong id="legendActive">0</strong></div>
+                            <div>Flagged: <strong id="legendFlagged">0</strong></div>
+                            <div>AI Conf: <strong id="legendConfidence">98%</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Stats Bar -->
+        <div class="live-stats-bar">
+            <div class="stats-ticker">
+                <div class="ticker-item">
+                    <span class="ticker-label">Total Birds</span>
+                    <span class="ticker-value" id="statTotal">--</span>
+                </div>
+                <div class="ticker-divider"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Healthy</span>
+                    <span class="ticker-value healthy" id="statHealthy">--</span>
+                </div>
+                <div class="ticker-divider"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Warning</span>
+                    <span class="ticker-value warning" id="statWarning">--</span>
+                </div>
+                <div class="ticker-divider"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Critical</span>
+                    <span class="ticker-value critical" id="statCritical">--</span>
+                </div>
+                <div class="ticker-divider"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Quarantine</span>
+                    <span class="ticker-value quarantine" id="statQuarantine">--</span>
+                </div>
+                <div class="ticker-divider"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Health Score</span>
+                    <span class="ticker-value" id="statHealthScore">--%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Robot Activity Log -->
+    <div class="robot-log" id="robotLog">
+        <div class="robot-log-header" id="robotLogHeader">
+            <span>🤖 Robot Activity</span>
+            <span id="logToggle">−</span>
+        </div>
+        <div class="robot-log-content" id="robotLogContent">
+            <div style="color: #555; font-style: italic;">Waiting for session...</div>
+        </div>
+    </div>
+
+    <!-- Alert Panel -->
+    <div class="alert-panel" id="alertPanel" style="display: none;">
+        <div class="alert-panel-header">
+            <span>⚠️ Alerts</span>
+            <span class="alert-badge" id="alertBadge">0</span>
+        </div>
+        <div class="alert-panel-content" id="alertPanelContent">
+            <div style="color: #555; text-align: center; padding: 20px;">No alerts</div>
+        </div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div class="notifications-container" id="notificationsContainer"></div>
+
+    <script>
+        // 🚨 EMERGENCY DEBUG HANDLER 🚨
+        window.onerror = function (msg, url, line, col, error) {
+            alert("❌ CRITICAL ERROR:\n" + msg + "\nLine: " + line);
+            return false;
+        };
+        console.log('✅ Debug Handler Installed');
+        // ═══════════════════════════════════════════════════════════════
+        // CHICKEN TWIN - Complete 3D Demo System
+        // ═══════════════════════════════════════════════════════════════
+
+        console.log('%c🐔 CHICKEN TWIN Loading...', 'color: #4ade80; font-size: 16px; font-weight: bold;');
+
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
+        const CONFIG = {
+            numChickens: 20,
+            farmSize: 30,
+            farmHeight: 8,
+            quarantineSize: 8,
+
+            temp: {
+                normal: { min: 40.6, max: 41.7 },
+                warning: { low: 39.0, high: 42.5 },
+                critical: { low: 38.0, high: 43.0 }
+            },
+
+            display: {
+                showKeypoints: true,
+                showSkeleton: false,
+                showLabels: true
+            },
+
+            robot: {
+                speed: 0.2,
+                armSpeed: 0.08
+            }
+        };
+
+        // Color schemes
+        const COLORS = {
+            healthy: { main: '#22c55e', glow: 'rgba(34, 197, 94, 0.4)', hex: 0x22c55e },
+            monitoring: { main: '#eab308', glow: 'rgba(234, 179, 8, 0.4)', hex: 0xeab308 },
+            elevated: { main: '#f97316', glow: 'rgba(249, 115, 22, 0.4)', hex: 0xf97316 },
+            critical: { main: '#ef4444', glow: 'rgba(239, 68, 68, 0.5)', hex: 0xef4444 },
+            quarantine: { main: '#06b6d4', glow: 'rgba(6, 182, 212, 0.4)', hex: 0x06b6d4 }
+        };
+
+        // Disease behaviors
+        const DISEASES = {
+            newcastleDisease: {
+                name: 'Newcastle Disease',
+                symptoms: ['respiratory_distress', 'twisted_neck', 'paralysis', 'green_diarrhea'],
+                tempRange: [42.5, 44.0],
+                mortality: 0.9,
+                treatment: 'no_treatment_cull_required'
+            },
+            avianInfluenza: {
+                name: 'Avian Influenza',
+                symptoms: ['sudden_death', 'respiratory_distress', 'cyanosis', 'edema'],
+                tempRange: [42.0, 44.0],
+                mortality: 0.95,
+                treatment: 'quarantine_and_cull'
+            },
+            infectiousBronchitis: {
+                name: 'Infectious Bronchitis',
+                symptoms: ['gasping', 'sneezing', 'watery_eyes', 'reduced_egg_production'],
+                tempRange: [41.5, 42.5],
+                mortality: 0.3,
+                treatment: 'supportive_care'
+            },
+            coccidiosis: {
+                name: 'Coccidiosis',
+                symptoms: ['bloody_diarrhea', 'weight_loss', 'pale_comb', 'huddling'],
+                tempRange: [40.0, 41.0],
+                mortality: 0.5,
+                treatment: 'anticoccidial_medication'
+            },
+            marekDisease: {
+                name: "Marek's Disease",
+                symptoms: ['paralysis', 'weight_loss', 'irregular_pupils', 'tumors'],
+                tempRange: [40.5, 41.5],
+                mortality: 0.8,
+                treatment: 'vaccination_prevention'
+            },
+            fowlCholera: {
+                name: 'Fowl Cholera',
+                symptoms: ['sudden_death', 'swollen_wattles', 'green_diarrhea', 'labored_breathing'],
+                tempRange: [42.0, 43.5],
+                mortality: 0.7,
+                treatment: 'antibiotics_sulfas'
+            }
+        };
+
+        // Symptom visual indicators
+        const SYMPTOM_VISUALS = {
+            lethargy: { icon: '💤', color: '#eab308' },
+            wing_droop: { icon: '🔽', color: '#f97316' },
+            isolation: { icon: '🔴', color: '#ef4444' },
+            limping: { icon: '🦵', color: '#ef4444' },
+            reduced_movement: { icon: '🐢', color: '#eab308' },
+            ruffled_feathers: { icon: '🪶', color: '#f97316' },
+            pale_comb: { icon: '💀', color: '#ef4444' },
+            bloody_diarrhea: { icon: '🩸', color: '#dc2626' },
+            green_diarrhea: { icon: '💚', color: '#16a34a' },
+            watery_diarrhea: { icon: '💧', color: '#3b82f6' },
+            respiratory_distress: { icon: '😮‍💨', color: '#ef4444' },
+            sneezing: { icon: '🤧', color: '#eab308' },
+            coughing: { icon: '😷', color: '#f97316' },
+            head_shaking: { icon: '🔄', color: '#eab308' },
+            loss_of_appetite: { icon: '🍽️', color: '#f97316' }
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // GLOBAL STATE
+        // ═══════════════════════════════════════════════════════════════
+        let sessionActive = false;
+        let sessionStartTime = null;
+        let currentSessionId = null;
+        let sessionTimer = null;
+
+        // Three.js - Main View
+        let scene, camera, renderer;
+        let chickens = [];
+        let chickenMeshes = [];
+        let quarantineChickens = [];
+        let quarantineMeshes = [];
+        let robotGroup = null;
+        let farmGroup = null;
+
+        // Three.js - AI View (Fixed Ceiling Camera)
+        let aiScene, aiCamera, aiRenderer;
+        let aiChickenMeshes = [];
+        let aiQuarantineMeshes = [];
+        let aiRobotGroup = null;
+
+        // Canvas for keypoint overlay
+        let keypointCanvas, keypointCtx;
+
+        // Camera controls
+        let moveForward = false, moveBackward = false;
+        let moveLeft = false, moveRight = false;
+        let moveUp = false, moveDown = false;
+        let moveSpeed = 0.25;
+        let mouseSensitivity = 0.002;
+        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        let isPointerLocked = false;
+
+        // Robot state
+        let robot = {
+            status: 'idle',
+            position: { x: 0, y: CONFIG.farmHeight - 1, z: 0 },
+            armExtension: 0,
+            target: null,
+            carrying: null,
+            quarantineTemp: 28.0,
+            injecting: false,
+            actionQueue: []
+        };
+
+        // Recording
+        let recordedFrames = [];
+        let alerts = [];
+
+        // WebSocket
+        let ws = null;
+        let wsConnected = false;
+
+        // ═══════════════════════════════════════════════════════════════
+        // CHICKEN CLASS with Full Behaviors
+        // ═══════════════════════════════════════════════════════════════
+        class Chicken {
+            constructor(id, inQuarantine = false) {
+                this.id = id;
+                this.inQuarantine = inQuarantine;
+
+                // Position
+                const area = inQuarantine ? CONFIG.quarantineSize : CONFIG.farmSize;
+                const halfArea = area / 2 - 1;
+
+                if (inQuarantine) {
+                    // Quarantine is in corner
+                    const qOffset = CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1;
+                    this.x = qOffset + (Math.random() - 0.5) * (CONFIG.quarantineSize - 2);
+                    this.z = qOffset + (Math.random() - 0.5) * (CONFIG.quarantineSize - 2);
+                } else {
+                    this.x = (Math.random() - 0.5) * (CONFIG.farmSize - 4);
+                    this.z = (Math.random() - 0.5) * (CONFIG.farmSize - 4);
+                }
+                this.y = 0;
+
+                // Movement
+                this.velocityX = 0;
+                this.velocityZ = 0;
+                this.direction = Math.random() * Math.PI * 2;
+                this.targetX = null;
+                this.targetZ = null;
+                this.waitTime = Math.random() * 100;
+                this.isBeingCarried = false;
+
+                // Temperature
+                this.temperature = CONFIG.temp.normal.min + Math.random() * (CONFIG.temp.normal.max - CONFIG.temp.normal.min);
+                this.baseTemperature = this.temperature;
+                this.healthFactor = 1.0;
+
+                // Health
+                this.riskScore = 0;
+                this.status = 'healthy';
+                this.detectionConfidence = 0.92 + Math.random() * 0.08;
+
+                // Disease
+                this.disease = null;
+                this.diseaseProgression = 0;
+
+                // Symptoms (0-1 severity)
+                this.symptoms = {
+                    lethargy: 0,
+                    wing_droop: 0,
+                    isolation: 0,
+                    limping: 0,
+                    reduced_movement: 0,
+                    ruffled_feathers: 0,
+                    pale_comb: 0,
+                    bloody_diarrhea: 0,
+                    green_diarrhea: 0,
+                    watery_diarrhea: 0,
+                    respiratory_distress: 0,
+                    sneezing: 0,
+                    coughing: 0,
+                    head_shaking: 0,
+                    loss_of_appetite: 0
+                };
+
+                // Behavior tracking
+                this.stepCount = 0;
+                this.sittingTime = 0;
+                this.activeTime = 0;
+                this.lastFecesTime = 0;
+                this.fecesType = 'normal'; // normal, watery, green, bloody
+                this.fecesPositions = [];
+
+                // Posture
+                this.posture = {
+                    wingAngleLeft: 35 + Math.random() * 5,
+                    wingAngleRight: 35 + Math.random() * 5,
+                    headPosition: 'normal', // normal, tucked, drooped, shaking
+                    stance: 'standing', // standing, sitting, limping, paralyzed
+                    bodyTilt: 0
+                };
+
+                // Animation
+                this.animPhase = Math.random() * Math.PI * 2;
+                this.walkCycle = 0;
+                this.breathCycle = 0;
+                this.blinkTimer = 0;
+
+                // Keypoints (19 points)
+                this.keypoints = this.generateKeypoints();
+
+                // Randomly infect some chickens
+                if (!inQuarantine && Math.random() < 0.12) {
+                    this.infectWithDisease();
+                }
+            }
+
+            infectWithDisease() {
+                const diseaseKeys = Object.keys(DISEASES);
+                const diseaseKey = diseaseKeys[Math.floor(Math.random() * diseaseKeys.length)];
+                this.disease = DISEASES[diseaseKey];
+                this.diseaseProgression = 0.3 + Math.random() * 0.5;
+
+                // Apply disease symptoms
+                this.disease.symptoms.forEach(symptom => {
+                    const normalized = symptom.replace(/_/g, '_');
+                    if (this.symptoms.hasOwnProperty(normalized)) {
+                        this.symptoms[normalized] = 0.4 + Math.random() * 0.6;
+                    }
+                });
+
+                // Temperature
+                const [minTemp, maxTemp] = this.disease.tempRange;
+                this.temperature = minTemp + Math.random() * (maxTemp - minTemp);
+                this.healthFactor = 0.8 - this.diseaseProgression * 0.3;
+
+                // Feces type based on disease
+                if (this.symptoms.bloody_diarrhea > 0.3) {
+                    this.fecesType = 'bloody';
+                } else if (this.symptoms.green_diarrhea > 0.3) {
+                    this.fecesType = 'green';
+                } else if (this.symptoms.watery_diarrhea > 0.3) {
+                    this.fecesType = 'watery';
+                }
+            }
+
+            generateKeypoints() {
+                return [
+                    { id: 0, name: 'beak', offset: { x: 0, y: 0.85, z: 0.55 } },
+                    { id: 1, name: 'head', offset: { x: 0, y: 0.9, z: 0.35 } },
+                    { id: 2, name: 'comb', offset: { x: 0, y: 1.0, z: 0.3 } },
+                    { id: 3, name: 'neck', offset: { x: 0, y: 0.7, z: 0.2 } },
+                    { id: 4, name: 'chest', offset: { x: 0, y: 0.5, z: 0.1 } },
+                    { id: 5, name: 'back', offset: { x: 0, y: 0.55, z: -0.2 } },
+                    { id: 6, name: 'left_shoulder', offset: { x: -0.25, y: 0.5, z: 0 } },
+                    { id: 7, name: 'left_wing_mid', offset: { x: -0.4, y: 0.4, z: -0.1 } },
+                    { id: 8, name: 'left_wing_tip', offset: { x: -0.55, y: 0.3, z: -0.15 } },
+                    { id: 9, name: 'right_shoulder', offset: { x: 0.25, y: 0.5, z: 0 } },
+                    { id: 10, name: 'right_wing_mid', offset: { x: 0.4, y: 0.4, z: -0.1 } },
+                    { id: 11, name: 'right_wing_tip', offset: { x: 0.55, y: 0.3, z: -0.15 } },
+                    { id: 12, name: 'left_hip', offset: { x: -0.12, y: 0.35, z: 0 } },
+                    { id: 13, name: 'left_knee', offset: { x: -0.12, y: 0.18, z: 0.02 } },
+                    { id: 14, name: 'left_foot', offset: { x: -0.12, y: 0, z: 0.05 } },
+                    { id: 15, name: 'right_hip', offset: { x: 0.12, y: 0.35, z: 0 } },
+                    { id: 16, name: 'right_knee', offset: { x: 0.12, y: 0.18, z: 0.02 } },
+                    { id: 17, name: 'right_foot', offset: { x: 0.12, y: 0, z: 0.05 } },
+                    { id: 18, name: 'tail', offset: { x: 0, y: 0.6, z: -0.4 } }
+                ];
+            }
+
+            getScreenKeypoints(screenX, screenY, scale) {
+                const kps = [];
+                const cos = Math.cos(this.direction);
+                const sin = Math.sin(this.direction);
+
+                this.keypoints.forEach(kp => {
+                    // Rotate offset by direction
+                    let ox = kp.offset.x * cos - kp.offset.z * sin;
+                    let oz = kp.offset.x * sin + kp.offset.z * cos;
+
+                    // Apply symptom modifications
+                    // Wing Droop
+                    if (kp.name.includes('wing') && this.symptoms.wing_droop > 0.3) {
+                        kp.offset.y -= this.symptoms.wing_droop * 0.15;
+                    }
+
+                    // Twisted Neck (Newcastle)
+                    if ((kp.name === 'head' || kp.name === 'beak' || kp.name === 'comb') && this.symptoms.twisted_neck > 0.3) {
+                        const twist = Date.now() / 200;
+                        ox += Math.sin(twist) * 0.1;
+                        kp.offset.y -= 0.1;
+                    }
+
+                    // Head Shaking
+                    if ((kp.name === 'head' || kp.name === 'beak') && this.symptoms.head_shaking > 0.3) {
+                        const shake = Math.sin(Date.now() / 50) * 0.05;
+                        ox += shake;
+                    }
+
+                    // Walking animation for feet & Limping
+                    if (kp.name.includes('foot') && this.posture.stance === 'standing') {
+                        let legOffset = Math.sin(this.walkCycle + (kp.name.includes('left') ? 0 : Math.PI)) * 0.03;
+
+                        // Limping affect
+                        if (this.symptoms.limping > 0.3) {
+                            if (kp.name.includes('left') && Math.random() > 0.5) legOffset *= 0.2; // Drag left leg
+                        }
+
+                        oz += legOffset;
+                    }
+
+                    kps.push({
+                        id: kp.id,
+                        name: kp.name,
+                        x: screenX + ox * scale * 50,
+                        y: screenY + oz * scale * 50,
+                        confidence: 0.85 + Math.random() * 0.15
+                    });
+                });
+
+                return kps;
+            }
+
+            calculateRiskScore() {
+                let risk = 0;
+
+                // Symptom weights
+                const weights = {
+                    lethargy: 0.15,
+                    wing_droop: 0.12,
+                    isolation: 0.10,
+                    limping: 0.12,
+                    reduced_movement: 0.10,
+                    ruffled_feathers: 0.08,
+                    pale_comb: 0.10,
+                    bloody_diarrhea: 0.25,
+                    green_diarrhea: 0.15,
+                    watery_diarrhea: 0.08,
+                    respiratory_distress: 0.20,
+                    sneezing: 0.08,
+                    coughing: 0.10,
+                    head_shaking: 0.06,
+                    loss_of_appetite: 0.10
+                };
+
+                for (const [symptom, weight] of Object.entries(weights)) {
+                    risk += (this.symptoms[symptom] || 0) * weight;
+                }
+
+                // Temperature contribution
+                const temp = this.temperature;
+                if (temp > CONFIG.temp.critical.high || temp < CONFIG.temp.critical.low) {
+                    risk += 0.35;
+                } else if (temp > CONFIG.temp.warning.high || temp < CONFIG.temp.warning.low) {
+                    risk += 0.15;
+                }
+
+                // Disease progression
+                if (this.disease) {
+                    risk += this.diseaseProgression * 0.3;
+                }
+
+                this.riskScore = Math.min(1, Math.max(0, risk));
+
+                // Status
+                if (this.riskScore >= 0.8) this.status = 'critical';
+                else if (this.riskScore >= 0.6) this.status = 'elevated';
+                else if (this.riskScore >= 0.4) this.status = 'warning';
+                else this.status = 'healthy';
+
+                return this.riskScore;
+            }
+
+            getColorScheme() {
+                if (this.inQuarantine || this.isBeingCarried) return COLORS.quarantine;
+                if (this.riskScore >= 0.8) return COLORS.critical;
+                if (this.riskScore >= 0.6) return COLORS.elevated;
+                if (this.riskScore >= 0.4) return COLORS.monitoring;
+                return COLORS.healthy;
+            }
+
+            updateStatus() {
+                return this.calculateRiskScore();
+            }
+
+            getActiveSymptoms() {
+                const active = [];
+                for (const [symptom, value] of Object.entries(this.symptoms)) {
+                    if (value > 0.3) {
+                        active.push({
+                            name: symptom.replace(/_/g, ' '),
+                            severity: value,
+                            visual: SYMPTOM_VISUALS[symptom]
+                        });
+                    }
+                }
+                return active.sort((a, b) => b.severity - a.severity);
+            }
+
+            update(deltaTime, allChickens) {
+                if (this.isBeingCarried) return;
+
+                const dt = deltaTime / 1000;
+
+                // Disease progression
+                if (this.disease && !this.inQuarantine) {
+                    this.diseaseProgression = Math.min(1, this.diseaseProgression + 0.0005 * dt);
+
+                    // Worsen symptoms over time
+                    this.disease.symptoms.forEach(symptom => {
+                        const normalized = symptom.replace(/_/g, '_');
+                        if (this.symptoms.hasOwnProperty(normalized)) {
+                            this.symptoms[normalized] = Math.min(1, this.symptoms[normalized] + 0.001 * dt);
+                        }
+                    });
+                }
+
+                // Recovery in quarantine
+                if (this.inQuarantine && this.disease) {
+                    this.diseaseProgression = Math.max(0, this.diseaseProgression - 0.0005 * dt);
+
+                    // Symptoms slowly improve
+                    for (const symptom of Object.keys(this.symptoms)) {
+                        this.symptoms[symptom] = Math.max(0, this.symptoms[symptom] - 0.0003 * dt);
+                    }
+
+                    // Temperature normalizes
+                    const targetTemp = (CONFIG.temp.normal.min + CONFIG.temp.normal.max) / 2;
+                    this.temperature += (targetTemp - this.temperature) * 0.001 * dt;
+                }
+
+                // Update posture based on symptoms
+                this.updatePosture();
+
+                // Movement (affected by symptoms)
+                this.updateMovement(deltaTime, allChickens);
+
+                // Feces production
+                this.updateFeces(deltaTime);
+
+                // Animation
+                this.animPhase += deltaTime * 0.008;
+                this.walkCycle += deltaTime * 0.02 * (this.symptoms.limping > 0.3 ? 0.5 : 1);
+                this.breathCycle += deltaTime * 0.005 * (this.symptoms.respiratory_distress > 0.3 ? 2 : 1);
+
+                // Calculate risk
+                this.calculateRiskScore();
+            }
+
+            updatePosture() {
+                // Wing droop
+                if (this.symptoms.wing_droop > 0.3) {
+                    this.posture.wingAngleLeft = 35 - this.symptoms.wing_droop * 20;
+                    this.posture.wingAngleRight = 35 - this.symptoms.wing_droop * 20;
+                }
+
+                // Stance
+                if (this.symptoms.lethargy > 0.6 || this.symptoms.paralysis > 0.3) {
+                    this.posture.stance = 'sitting';
+                } else if (this.symptoms.limping > 0.3) {
+                    this.posture.stance = 'limping';
+                } else {
+                    this.posture.stance = 'standing';
+                }
+
+                // Head position
+                if (this.symptoms.lethargy > 0.5) {
+                    this.posture.headPosition = 'tucked';
+                } else if (this.symptoms.head_shaking > 0.3) {
+                    this.posture.headPosition = 'shaking';
+                } else {
+                    this.posture.headPosition = 'normal';
+                }
+
+                // Body tilt
+                this.posture.bodyTilt = this.symptoms.limping * 10;
+            }
+
+            updateMovement(deltaTime, allChickens) {
+                // Severely sick chickens don't move much
+                const mobilityFactor = 1 - (this.symptoms.lethargy + this.symptoms.limping) * 0.4;
+
+                if (mobilityFactor < 0.3 || this.posture.stance === 'sitting') {
+                    this.velocityX = 0;
+                    this.velocityZ = 0;
+                    this.sittingTime += deltaTime / 1000;
+                    return;
+                }
+
+                this.activeTime += deltaTime / 1000;
+                this.waitTime -= deltaTime / 16;
+
+                if (this.waitTime <= 0) {
+                    if (!this.targetX || Math.random() < 0.02) {
+                        let boundary, offsetX, offsetZ;
+
+                        if (this.inQuarantine) {
+                            boundary = CONFIG.quarantineSize / 2 - 1;
+                            const qOffset = CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1;
+                            offsetX = qOffset;
+                            offsetZ = qOffset;
+                        } else {
+                            boundary = CONFIG.farmSize / 2 - 1;
+                            offsetX = 0;
+                            offsetZ = 0;
+                        }
+
+                        this.targetX = offsetX + (Math.random() - 0.5) * boundary * 2;
+                        this.targetZ = offsetZ + (Math.random() - 0.5) * boundary * 2;
+                    }
+
+                    const dx = this.targetX - this.x;
+                    const dz = this.targetZ - this.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist > 0.5) {
+                        let speed = (0.06 + Math.random() * 0.03) * mobilityFactor;
+
+                        // Limping causes uneven movement
+                        if (this.symptoms.limping > 0.3) {
+                            speed *= 0.5 + Math.sin(this.walkCycle * 2) * 0.3;
+                        }
+
+                        this.velocityX = (dx / dist) * speed;
+                        this.velocityZ = (dz / dist) * speed;
+                        this.direction = Math.atan2(dx, dz);
+                        this.stepCount++;
+                    } else {
+                        this.velocityX = 0;
+                        this.velocityZ = 0;
+                        this.waitTime = 30 + Math.random() * 100 / mobilityFactor;
+                        this.targetX = null;
+                    }
+                }
+
+                this.x += this.velocityX;
+                this.z += this.velocityZ;
+
+                // Boundary
+                let boundary, offsetX, offsetZ;
+                if (this.inQuarantine) {
+                    boundary = CONFIG.quarantineSize / 2 - 0.5;
+                    const qOffset = CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1;
+                    offsetX = qOffset;
+                    offsetZ = qOffset;
+                    this.x = Math.max(offsetX - boundary, Math.min(offsetX + boundary, this.x));
+                    this.z = Math.max(offsetZ - boundary, Math.min(offsetZ + boundary, this.z));
+                } else {
+                    boundary = CONFIG.farmSize / 2 - 0.5;
+                    this.x = Math.max(-boundary, Math.min(boundary, this.x));
+                    this.z = Math.max(-boundary, Math.min(boundary, this.z));
+
+                    // Prevent walking INTO quarantine
+                    const qHalf = CONFIG.quarantineSize / 2;
+                    const qOffset = CONFIG.farmSize / 2 - qHalf - 1;
+                    const qMinX = qOffset - qHalf - 0.5;
+                    const qMaxX = qOffset + qHalf + 0.5;
+                    const qMinZ = qOffset - qHalf - 0.5;
+                    const qMaxZ = qOffset + qHalf + 0.5;
+
+                    if (this.x > qMinX && this.x < qMaxX && this.z > qMinZ && this.z < qMaxZ) {
+                        // Push out
+                        if (this.x < qOffset) this.x = qMinX - 0.2;
+                        else this.x = qMaxX + 0.2;
+                    }
+                }
+
+                // Isolation detection
+                let minNeighborDist = Infinity;
+                for (const other of allChickens) {
+                    if (other.id !== this.id && !other.inQuarantine && !other.isBeingCarried) {
+                        const d = Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.z - other.z, 2));
+                        if (d < minNeighborDist) minNeighborDist = d;
+                    }
+                }
+
+                if (minNeighborDist > 5) {
+                    this.symptoms.isolation = Math.min(1, this.symptoms.isolation + 0.005);
+                } else {
+                    this.symptoms.isolation = Math.max(0, this.symptoms.isolation - 0.002);
+                }
+            }
+
+            updateFeces(deltaTime) {
+                this.lastFecesTime += deltaTime;
+
+                // Chickens produce feces every 30-60 seconds (accelerated for demo)
+                const fecesInterval = this.symptoms.watery_diarrhea > 0.3 ||
+                    this.symptoms.bloody_diarrhea > 0.3 ||
+                    this.symptoms.green_diarrhea > 0.3 ? 2000 : 6000;
+
+                if (this.lastFecesTime > fecesInterval) {
+                    this.lastFecesTime = 0;
+
+                    // Create feces marker
+                    this.fecesPositions.push({
+                        x: this.x,
+                        z: this.z,
+                        type: this.fecesType,
+                        time: Date.now()
+                    });
+
+                    // Clean up old feces (keep last 3)
+                    if (this.fecesPositions.length > 3) {
+                        this.fecesPositions.shift();
+                    }
+                }
+            }
+
+            toJSON() {
+                return {
+                    id: this.id,
+                    x: +this.x.toFixed(2),
+                    z: +this.z.toFixed(2),
+                    t: +this.temperature.toFixed(2),
+                    r: +this.riskScore.toFixed(3),
+                    s: this.status[0],
+                    d: +this.direction.toFixed(2),
+                    sym: this.getActiveSymptoms().slice(0, 3).map(s => s.name),
+                    disease: this.disease ? this.disease.name : null,
+                    feces: this.fecesType
+                };
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // THREE.JS INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        function initThreeJS() {
+            const container = document.getElementById('canvas3DContainer');
+            const canvas = document.getElementById('canvas3D');
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 200);
+            // Moved camera inside the barn to avoid wall obstruction
+            camera.position.set(0, 10, 14);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // Lighting
+            setupLighting(scene);
+
+            // Create farm
+            createRealisticFarm(scene);
+
+            // Create robot
+            createRobot(scene);
+
+            // Resize handler
+            window.addEventListener('resize', () => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            });
+        }
+
+        function initAIView() {
+            const container = document.getElementById('aiViewContainer');
+            const canvas = document.getElementById('aiViewCanvas');
+
+            // Scene (clone of main scene structure)
+            aiScene = new THREE.Scene();
+            aiScene.background = new THREE.Color(0x0a0a0a);
+
+            // Fixed ceiling camera
+            // Perspective 3D Camera for AI View
+            aiCamera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+            // Top-down view inside the barn
+            // Top-down view inside the barn
+            aiCamera.position.set(0, 40, 0); // High up to see entire farm (60x60)
+            aiCamera.lookAt(0, 0, 0);
+            aiCamera.rotation.z = -Math.PI / 2; // Rotate to align with farm grid
+
+            // Renderer
+            aiRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            aiRenderer.setClearColor(0x000000, 0); // Transparent background
+            aiRenderer.setSize(container.clientWidth, container.clientHeight);
+            aiRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            aiRenderer.shadowMap.enabled = true;
+
+            // Lighting
+            setupLighting(aiScene);
+
+            // Create farm (same as main)
+            createRealisticFarm(aiScene, true);
+
+            // Create robot
+            createRobot(aiScene, true);
+
+            // Create keypoint overlay canvas
+            keypointCanvas = document.createElement('canvas');
+            keypointCanvas.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;';
+            container.appendChild(keypointCanvas);
+            keypointCtx = keypointCanvas.getContext('2d');
+
+            // Resize handler
+            const resizeAI = () => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                aiCamera.aspect = w / h;
+                aiCamera.updateProjectionMatrix();
+                aiRenderer.setSize(w, h);
+                keypointCanvas.width = w;
+                keypointCanvas.height = h;
+            };
+
+            window.addEventListener('resize', resizeAI);
+            resizeAI();
+        }
+
+        function setupLighting(targetScene) {
+            // Ambient - softer for CCTV feel
+            const ambient = new THREE.AmbientLight(0xffffff, 0.2);
+            targetScene.add(ambient);
+
+            // Main directional light (sun) - reduced intensity
+            const sun = new THREE.DirectionalLight(0xfff5e6, 0.3);
+            sun.position.set(20, 30, 20);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            targetScene.add(sun);
+
+            // Fill light - dim
+            const fill = new THREE.DirectionalLight(0x9090ff, 0.3);
+            fill.position.set(-20, 20, -20);
+            targetScene.add(fill);
+
+            // Interior lights - dimmed for realism
+            const interior1 = new THREE.PointLight(0xffddaa, 0.6, 35);
+            interior1.position.set(0, CONFIG.farmHeight - 1, 0);
+            targetScene.add(interior1);
+
+            const interior2 = new THREE.PointLight(0xffddaa, 0.4, 30);
+            interior2.position.set(-10, CONFIG.farmHeight - 2, -10);
+            targetScene.add(interior2);
+
+            const interior3 = new THREE.PointLight(0xffddaa, 0.4, 30);
+            interior3.position.set(10, CONFIG.farmHeight - 2, 10);
+            targetScene.add(interior3);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // REALISTIC FARM CREATION
+        // ═══════════════════════════════════════════════════════════════
+        function createRealisticFarm(targetScene, isAIView = false) {
+            const group = new THREE.Group();
+            group.name = 'farm';
+
+            const s = CONFIG.farmSize;
+            const h = CONFIG.farmHeight;
+
+            // Floor - Concrete/Dirt mix texture simulation
+            const floorGeo = new THREE.PlaneGeometry(s, s, 20, 20);
+
+            // Vary the floor height slightly for realism
+            const floorVertices = floorGeo.attributes.position;
+            for (let i = 0; i < floorVertices.count; i++) {
+                floorVertices.setZ(i, Math.random() * 0.05);
+            }
+            floorGeo.computeVertexNormals();
+
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x8B7355,
+                roughness: 0.9,
+                metalness: 0.0
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            group.add(floor);
+
+            // Straw/bedding layer
+            const strawGeo = new THREE.PlaneGeometry(s - 2, s - 2);
+            const strawMat = new THREE.MeshStandardMaterial({
+                color: 0xD4A574,
+                roughness: 1.0,
+                transparent: true,
+                opacity: 0.7
+            });
+            const straw = new THREE.Mesh(strawGeo, strawMat);
+            straw.rotation.x = -Math.PI / 2;
+            straw.position.y = 0.02;
+            straw.receiveShadow = true;
+            group.add(straw);
+
+            // Walls - Wooden barn style
+            const wallMat = new THREE.MeshStandardMaterial({
+                color: 0x6B4423,
+                roughness: 0.8
+            });
+
+            const wallThickness = 0.3;
+            const halfS = s / 2;
+
+            // Create walls with windows/openings
+            createBarnWall(group, 0, h / 2, -halfS, s, h, wallThickness, wallMat, false); // Back
+            createBarnWall(group, 0, h / 2, halfS, s, h, wallThickness, wallMat, true);  // Front (with door)
+            createBarnWall(group, -halfS, h / 2, 0, wallThickness, h, s, wallMat, false); // Left
+            createBarnWall(group, halfS, h / 2, 0, wallThickness, h, s, wallMat, false);  // Right
+
+            // Roof - Pitched barn roof
+            createBarnRoof(group, s, h);
+
+            // Ceiling rail for robot
+            const railMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.3 });
+            const rail = new THREE.Mesh(
+                new THREE.BoxGeometry(s - 4, 0.2, 0.3),
+                railMat
+            );
+            rail.position.set(0, h - 0.5, 0);
+            rail.castShadow = true;
+            group.add(rail);
+
+            // Cross rail
+            const crossRail = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.2, s - 4),
+                railMat
+            );
+            crossRail.position.set(0, h - 0.5, 0);
+            crossRail.castShadow = true;
+            group.add(crossRail);
+
+            // Feeders and waterers
+            createEquipment(group, s);
+
+            // Quarantine area (inside corner)
+            createQuarantineZone(group, s, h);
+
+            targetScene.add(group);
+
+            if (!isAIView) {
+                farmGroup = group;
+            }
+        }
+
+        function createBarnWall(group, x, y, z, w, h, d, mat, hasDoor) {
+            if (hasDoor) {
+                // Wall with door opening
+                const doorWidth = 3;
+                const doorHeight = h * 0.7;
+
+                // Left section
+                const leftW = (w - doorWidth) / 2;
+                const left = new THREE.Mesh(new THREE.BoxGeometry(leftW, h, d), mat);
+                left.position.set(x - doorWidth / 2 - leftW / 2, y, z);
+                left.castShadow = true;
+                left.receiveShadow = true;
+                group.add(left);
+
+                // Right section
+                const right = new THREE.Mesh(new THREE.BoxGeometry(leftW, h, d), mat);
+                right.position.set(x + doorWidth / 2 + leftW / 2, y, z);
+                right.castShadow = true;
+                right.receiveShadow = true;
+                group.add(right);
+
+                // Top section above door
+                const topH = h - doorHeight;
+                const top = new THREE.Mesh(new THREE.BoxGeometry(doorWidth, topH, d), mat);
+                top.position.set(x, y + h / 2 - topH / 2, z);
+                top.castShadow = true;
+                group.add(top);
+            } else {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                wall.position.set(x, y, z);
+                wall.castShadow = true;
+                wall.receiveShadow = true;
+                group.add(wall);
+            }
+        }
+
+        function createBarnRoof(group, size, height) {
+            const roofMat = new THREE.MeshStandardMaterial({
+                color: 0x4a3728,
+                roughness: 0.7,
+                side: THREE.DoubleSide
+            });
+
+            // Simple flat roof for now (pitched roof is more complex)
+            const roof = new THREE.Mesh(
+                new THREE.PlaneGeometry(size + 2, size + 2),
+                new THREE.MeshStandardMaterial({
+                    color: 0x3a2a1a,
+                    roughness: 0.9,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.85
+                })
+            );
+            roof.rotation.x = Math.PI / 2;
+            roof.position.y = height;
+            group.add(roof);
+
+            // Roof beams
+            const beamMat = new THREE.MeshStandardMaterial({ color: 0x3a2518, roughness: 0.8 });
+            for (let i = -2; i <= 2; i++) {
+                const beam = new THREE.Mesh(new THREE.BoxGeometry(size + 1, 0.25, 0.25), beamMat);
+                beam.position.set(0, height - 0.15, i * (size / 5));
+                beam.castShadow = true;
+                group.add(beam);
+            }
+        }
+
+        function createEquipment(group, size) {
+            const halfS = size / 2;
+
+            // Feeders (cylindrical)
+            const feederMat = new THREE.MeshStandardMaterial({ color: 0xcc4444, roughness: 0.5 });
+            const feederPositions = [
+                [-halfS + 4, -halfS + 4],
+                [halfS - 4, -halfS + 4],
+                [-halfS + 4, halfS - 8],
+                [halfS - 4, halfS - 8]
+            ];
+
+            feederPositions.forEach(([x, z]) => {
+                const feeder = new THREE.Group();
+
+                // Base
+                const base = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.6, 0.7, 0.3, 16),
+                    feederMat
+                );
+                base.position.y = 0.15;
+                feeder.add(base);
+
+                // Container
+                const container = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.5, 0.6, 0.6, 16),
+                    feederMat
+                );
+                container.position.y = 0.6;
+                feeder.add(container);
+
+                // Lid
+                const lid = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.55, 0.3, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.5 })
+                );
+                lid.position.y = 1.05;
+                feeder.add(lid);
+
+                feeder.position.set(x, 0, z);
+                feeder.castShadow = true;
+                group.add(feeder);
+            });
+
+            // Waterers (blue)
+            const watererMat = new THREE.MeshStandardMaterial({ color: 0x3377cc, roughness: 0.4, metalness: 0.2 });
+            const watererPositions = [
+                [0, -halfS + 4],
+                [0, halfS - 8]
+            ];
+
+            watererPositions.forEach(([x, z]) => {
+                const waterer = new THREE.Group();
+
+                const base = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.5, 0.55, 0.2, 16),
+                    watererMat
+                );
+                base.position.y = 0.1;
+                waterer.add(base);
+
+                const tank = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.4, 0.5, 0.8, 16),
+                    watererMat
+                );
+                tank.position.y = 0.6;
+                waterer.add(tank);
+
+                waterer.position.set(x, 0, z);
+                waterer.castShadow = true;
+                group.add(waterer);
+            });
+
+            // Straw bales
+            const strawMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 1.0 });
+            [
+                [-halfS + 2, -halfS + 2, 0.2],
+                [halfS - 2, halfS - 8, -0.3]
+            ].forEach(([x, z, rot]) => {
+                const bale = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 0.8), strawMat);
+                bale.position.set(x, 0.4, z);
+                bale.rotation.y = rot;
+                bale.castShadow = true;
+                group.add(bale);
+            });
+        }
+
+        function createQuarantineZone(group, farmSize, height) {
+            const qSize = CONFIG.quarantineSize;
+            const qHeight = height - 1;
+            const offset = farmSize / 2 - qSize / 2 - 1;
+
+            // Floor
+            const qFloor = new THREE.Mesh(
+                new THREE.PlaneGeometry(qSize, qSize),
+                new THREE.MeshStandardMaterial({ color: 0xffcccc, roughness: 0.8 })
+            );
+            qFloor.rotation.x = -Math.PI / 2;
+            qFloor.position.set(offset, 0.03, offset);
+            qFloor.receiveShadow = true;
+            group.add(qFloor);
+
+            // Glass walls
+            const glassMat = new THREE.MeshStandardMaterial({
+                color: 0xff6666,
+                transparent: true,
+                opacity: 0.25,
+                roughness: 0.1,
+                metalness: 0.1
+            });
+
+            const halfQ = qSize / 2;
+            [
+                [offset, qHeight / 2, offset - halfQ, qSize, qHeight, 0.1],
+                [offset, qHeight / 2, offset + halfQ, qSize, qHeight, 0.1],
+                [offset - halfQ, qHeight / 2, offset, 0.1, qHeight, qSize],
+                [offset + halfQ, qHeight / 2, offset, 0.1, qHeight, qSize]
+            ].forEach(([x, y, z, w, h, d]) => {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), glassMat);
+                wall.position.set(x, y, z);
+                group.add(wall);
+            });
+
+            // Warning stripes on floor
+            const stripeMat = new THREE.MeshBasicMaterial({ color: 0xff4444 });
+            [
+                [offset, 0.04, offset - halfQ + 0.15, qSize, 0.3],
+                [offset, 0.04, offset + halfQ - 0.15, qSize, 0.3]
+            ].forEach(([x, y, z, w, d]) => {
+                const stripe = new THREE.Mesh(new THREE.PlaneGeometry(w, d), stripeMat);
+                stripe.rotation.x = -Math.PI / 2;
+                stripe.position.set(x, y, z);
+                group.add(stripe);
+            });
+
+            // Label
+            createTextSprite(group, '🏥 QUARANTINE', offset, qHeight + 0.5, offset, 0xff4444);
+        }
+
+        function createTextSprite(group, text, x, y, z, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#000000aa';
+            ctx.fillRect(0, 0, 256, 64);
+
+            ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 128, 32);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMat = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(4, 1, 1);
+            sprite.position.set(x, y, z);
+            group.add(sprite);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // ROBOT CREATION
+        // ═══════════════════════════════════════════════════════════════
+        function createRobot(targetScene, isAIView = false) {
+            const group = new THREE.Group();
+            group.name = 'robot';
+
+            const h = CONFIG.farmHeight;
+
+            // Materials
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.8, roughness: 0.3 });
+            const armMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.3, roughness: 0.5 });
+            const jointMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.5, roughness: 0.4 });
+            const gripperMat = new THREE.MeshStandardMaterial({ color: 0x00ccff, metalness: 0.4, roughness: 0.3 });
+
+            // Carriage (moves along ceiling rail)
+            const carriage = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.6, 1), metalMat);
+            carriage.position.set(0, h - 0.8, 0);
+            carriage.castShadow = true;
+            carriage.name = 'carriage';
+            group.add(carriage);
+
+            // Motor housing
+            const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.4, 12), metalMat);
+            motor.position.set(0, h - 1.3, 0);
+            motor.name = 'motor';
+            group.add(motor);
+
+            // Arm segments (Telescoping - Siblings for simple extension)
+            const armGroup = new THREE.Group();
+            armGroup.name = 'armGroup';
+            armGroup.position.set(0, h - 1.5, 0); // Start just below motor
+            armGroup.visible = false; // Hidden by default
+            group.add(armGroup);
+
+            // Create telescoping segments
+            const segments = [
+                { length: 1.2, radius: 0.12 },
+                { length: 1.2, radius: 0.10 }, // Slightly longer overlap
+                { length: 1.2, radius: 0.08 }
+            ];
+
+            segments.forEach((seg, i) => {
+                const segment = new THREE.Mesh(
+                    new THREE.CylinderGeometry(seg.radius, seg.radius, seg.length, 12),
+                    armMat
+                );
+                // Initial position: all nested inside the first one (or stacked)
+                // We'll let updateRobotArm handle the extension
+                segment.position.y = 0;
+                segment.castShadow = true;
+                armGroup.add(segment);
+            });
+
+            // End effector (gripper)
+            const endEffector = new THREE.Group();
+            endEffector.name = 'endEffector';
+            endEffector.position.y = 0; // Will be moved by updateRobotArm
+            endEffector.visible = false; // Hidden by default
+            group.add(endEffector);
+
+            // Gripper base - make it connect visually to the last segment
+            const gripperBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.2, 12), gripperMat);
+            gripperBase.castShadow = true;
+            endEffector.add(gripperBase);
+
+            // Gripper fingers
+            const fingerMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.6, roughness: 0.4 });
+            [-0.08, 0.08].forEach(xOff => {
+                const finger = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.2, 0.06), fingerMat);
+                finger.position.set(xOff, -0.2, 0);
+                endEffector.add(finger);
+
+                const pad = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.02, 0.15, 0.05),
+                    new THREE.MeshStandardMaterial({ color: 0x44aa44 })
+                );
+                pad.position.set(xOff * 0.7, -0.2, 0);
+                endEffector.add(pad);
+            });
+
+            // Syringe/injector system
+            const syringeGroup = new THREE.Group();
+            syringeGroup.name = 'syringe';
+
+            const syringeBody = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.03, 0.04, 0.25, 8),
+                new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
+            );
+            syringeBody.rotation.x = Math.PI / 6;
+            syringeBody.position.set(0, -0.1, 0.12);
+            syringeGroup.add(syringeBody);
+
+            const needle = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.005, 0.005, 0.15, 6),
+                new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })
+            );
+            needle.rotation.x = Math.PI / 6;
+            needle.position.set(0, -0.25, 0.2);
+            needle.name = 'needle';
+            needle.visible = false;
+            syringeGroup.add(needle);
+
+            endEffector.add(syringeGroup);
+
+            // Status lights
+            const statusLight = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+            );
+            statusLight.position.set(0.5, h - 0.6, 0.4);
+            statusLight.name = 'statusLight';
+            group.add(statusLight);
+
+            targetScene.add(group);
+
+            if (!isAIView) {
+                robotGroup = group;
+            } else {
+                aiRobotGroup = group;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CHICKEN MESH CREATION
+        // ═══════════════════════════════════════════════════════════════
+        function createChickenMesh(chicken) {
+            const group = new THREE.Group();
+
+            const colorScheme = chicken.getColorScheme();
+            const bodyColor = chicken.status === 'critical' ? 0xff6666 :
+                chicken.status === 'elevated' ? 0xff9944 :
+                    chicken.status === 'warning' ? 0xffdd44 : 0xffffff;
+
+            // Body
+            const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.7 });
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), bodyMat);
+            body.scale.set(1, 0.8, 1.1);
+            body.position.y = 0.4;
+            body.castShadow = true;
+            body.name = 'body';
+            group.add(body);
+
+            // Head
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), headMat);
+            head.position.set(0, 0.7, 0.28);
+            head.castShadow = true;
+            head.name = 'head';
+            group.add(head);
+
+            // Beak
+            const beakMat = new THREE.MeshStandardMaterial({ color: 0xffa500, roughness: 0.5 });
+            const beak = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 6), beakMat);
+            beak.rotation.x = Math.PI / 2;
+            beak.position.set(0, 0.68, 0.43);
+            group.add(beak);
+
+            // Comb
+            const combColor = chicken.symptoms.pale_comb > 0.3 ? 0xffaaaa : 0xff0000;
+            const combMat = new THREE.MeshStandardMaterial({ color: combColor, roughness: 0.6 });
+            const comb = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.15), combMat);
+            comb.position.set(0, 0.85, 0.25);
+            group.add(comb);
+
+            // Wattle
+            const wattle = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), combMat);
+            wattle.position.set(0, 0.6, 0.35);
+            group.add(wattle);
+
+            // Eyes
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            [-0.08, 0.08].forEach(xOff => {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+                eye.position.set(xOff, 0.73, 0.4);
+                group.add(eye);
+            });
+
+            // Wings (affected by wing_droop symptom)
+            const wingMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.8 });
+            const wingAngle = chicken.symptoms.wing_droop > 0.3 ?
+                Math.PI / 2 + chicken.symptoms.wing_droop * 0.5 : Math.PI / 2;
+
+            [-1, 1].forEach(side => {
+                const wing = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), wingMat);
+                wing.scale.set(0.3, 0.6, 1);
+                wing.position.set(side * 0.3, 0.4, -0.05);
+                wing.rotation.z = side * wingAngle;
+                wing.name = side === -1 ? 'leftWing' : 'rightWing';
+                group.add(wing);
+            });
+
+            // Tail
+            const tail = new THREE.Mesh(
+                new THREE.ConeGeometry(0.12, 0.3, 6),
+                new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 })
+            );
+            tail.rotation.x = -Math.PI / 4;
+            tail.position.set(0, 0.5, -0.35);
+            group.add(tail);
+
+            // Legs
+            const legMat = new THREE.MeshStandardMaterial({ color: 0xffa500, roughness: 0.6 });
+            [-0.1, 0.1].forEach(xOff => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.25, 6), legMat);
+                leg.position.set(xOff, 0.12, 0);
+                group.add(leg);
+
+                // Foot
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.12), legMat);
+                foot.position.set(xOff, 0.01, 0.02);
+                group.add(foot);
+            });
+
+            // Symptom indicators (visible markers)
+            if (chicken.symptoms.ruffled_feathers > 0.3) {
+                // Add spiky appearance
+                for (let i = 0; i < 8; i++) {
+                    const spike = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.03, 0.1, 4),
+                        new THREE.MeshStandardMaterial({ color: 0xdddddd })
+                    );
+                    const angle = (i / 8) * Math.PI * 2;
+                    spike.position.set(
+                        Math.cos(angle) * 0.3,
+                        0.4 + Math.random() * 0.1,
+                        Math.sin(angle) * 0.35
+                    );
+                    spike.rotation.z = Math.cos(angle) * 0.3;
+                    spike.rotation.x = Math.sin(angle) * 0.3;
+                    group.add(spike);
+                }
+            }
+
+            // Position and rotation
+            group.position.set(chicken.x, 0, chicken.z);
+            group.rotation.y = chicken.direction;
+            group.userData = { chicken, id: chicken.id };
+
+            return group;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EVENT LISTENERS
+        // ═══════════════════════════════════════════════════════════════
+        function initEventListeners() {
+            // Session controls
+            document.getElementById('startSession').addEventListener('click', () => startSession(false));
+            document.getElementById('stopSession').addEventListener('click', stopSession);
+
+            // Mobile nav
+            document.getElementById('navToggle').addEventListener('click', () => {
+                document.getElementById('navMenu').classList.toggle('active');
+                document.getElementById('navToggle').classList.toggle('active');
+            });
+
+            // 3D controls
+            const canvas = document.getElementById('canvas3D');
+
+            canvas.addEventListener('click', () => {
+                if (sessionActive) canvas.requestPointerLock();
+            });
+
+            document.addEventListener('pointerlockchange', () => {
+                isPointerLocked = document.pointerLockElement === canvas;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isPointerLocked || !sessionActive) return;
+                euler.setFromQuaternion(camera.quaternion);
+                euler.y -= e.movementX * mouseSensitivity;
+                euler.x -= e.movementY * mouseSensitivity;
+                euler.x = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, euler.x));
+                camera.quaternion.setFromEuler(euler);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!sessionActive) return;
+                switch (e.code) {
+                    case 'KeyW': moveForward = true; break;
+                    case 'KeyS': moveBackward = true; break;
+                    case 'KeyA': moveLeft = true; break;
+                    case 'KeyD': moveRight = true; break;
+                    case 'Space': moveUp = true; e.preventDefault(); break;
+                    case 'ShiftLeft': case 'ShiftRight': moveDown = true; break;
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                switch (e.code) {
+                    case 'KeyW': moveForward = false; break;
+                    case 'KeyS': moveBackward = false; break;
+                    case 'KeyA': moveLeft = false; break;
+                    case 'KeyD': moveRight = false; break;
+                    case 'Space': moveUp = false; break;
+                    case 'ShiftLeft': case 'ShiftRight': moveDown = false; break;
+                }
+            });
+
+            canvas.addEventListener('wheel', (e) => {
+                moveSpeed = Math.max(0.1, Math.min(0.8, moveSpeed - e.deltaY * 0.0005));
+            });
+
+            // View toggles
+            const toggleKeypoints = document.getElementById('toggleKeypoints');
+            if (toggleKeypoints) {
+                toggleKeypoints.addEventListener('change', (e) => {
+                    CONFIG.display.showKeypoints = e.target.checked;
+                });
+            }
+
+            const toggleSkeleton = document.getElementById('toggleSkeleton');
+            if (toggleSkeleton) {
+                toggleSkeleton.addEventListener('change', (e) => {
+                    CONFIG.display.showSkeleton = e.target.checked;
+                });
+            }
+
+            const toggleLabels = document.getElementById('toggleLabels');
+            if (toggleLabels) {
+                toggleLabels.addEventListener('change', (e) => {
+                    CONFIG.display.showLabels = e.target.checked;
+                });
+            }
+
+            // Robot log toggle
+            document.getElementById('robotLogHeader').addEventListener('click', () => {
+                const content = document.getElementById('robotLogContent');
+                const toggle = document.getElementById('logToggle');
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    toggle.textContent = '−';
+                } else {
+                    content.style.display = 'none';
+                    toggle.textContent = '+';
+                }
+            });
+
+            // Save session state before leaving (but don't stop the session!)
+            // Session should persist across page reloads
+            window.addEventListener('beforeunload', () => {
+                if (sessionActive) {
+                    saveSessionState();
+                    // Do NOT stop session here - let it persist!
+                }
+            });
+
+            // Handle visibility change (tab switch) - just save state
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && sessionActive) {
+                    saveSessionState();
+                }
+            });
+
+            // Detect actual browser close vs just reload/navigation
+            // Use pagehide with persisted flag
+            window.addEventListener('pagehide', (event) => {
+                if (sessionActive) {
+                    saveSessionState();
+                    // Only stop if browser is actually closing (not persisted in back-forward cache)
+                    // For now, keep session running - only explicit stop button should stop it
+                }
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SESSION MANAGEMENT
+        // ═══════════════════════════════════════════════════════════════
+        function startSession(resuming = false) {
+            if (sessionActive && !resuming) return;
+
+            console.log('🚀 Starting session...', { resuming });
+            sessionActive = true;
+
+            if (!resuming) {
+                try {
+                    sessionStartTime = Date.now();
+                    currentSessionId = `session_${Date.now()}`;
+                    recordedFrames = [];
+                    alerts = [];
+
+                    // Initialize chickens
+                    initializeChickens();
+
+                    // Reset robot
+                    robot.status = 'idle';
+                    robot.position = { x: 0, y: CONFIG.farmHeight - 1, z: 0 };
+                    robot.target = null;
+                    robot.carrying = null;
+
+                    // Session manager
+                    if (window.sessionManager) {
+                        sessionManager.startSession();
+                    }
+
+                    // Notify server
+                    fetch('/api/sessions/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: currentSessionId,
+                            startTime: new Date().toISOString()
+                        })
+                    })
+                        .then(res => {
+                            if (!res.ok) throw new Error('Server responded with ' + res.status);
+                            return res.json();
+                        })
+                        .then(data => console.log('Session started on server:', data))
+                        .catch(e => {
+                            console.error('SERVER ERROR:', e);
+                            showNotification('Connection Error', 'Failed to start session on backend. Check console.', 'critical');
+                        });
+
+                    // Connect WebSocket
+                    connectWebSocket();
+
+                    addRobotLog('🟢 Session started');
+                    addRobotLog('📹 Recording active');
+                    showNotification('Session Started', 'AI monitoring and recording active', 'success');
+                } catch (err) {
+                    console.error('START SESSION ERROR:', err);
+                    alert('Failed to start session: ' + err.message);
+                    sessionActive = false; // Reset state
+                    return;
+                }
+            } else {
+                // Restore chickens from session manager
+                if (window.sessionManager) {
+                    const savedBirds = sessionManager.getBirds();
+                    const savedQuarantine = sessionManager.getQuarantineBirds();
+                    const savedRobot = sessionManager.getRobot();
+
+                    if (savedBirds.length > 0) {
+                        restoreChickensFromState(savedBirds, savedQuarantine);
+                        console.log(`🔄 Restored ${savedBirds.length} chickens + ${savedQuarantine.length} quarantined`);
+                    } else {
+                        // No saved birds, initialize new ones
+                        initializeChickens();
+                    }
+
+                    // Restore robot state
+                    if (savedRobot) {
+                        robot.status = savedRobot.status || 'idle';
+                        robot.position = savedRobot.position || { x: 0, y: CONFIG.farmHeight - 1, z: 0 };
+                        robot.quarantineTemp = savedRobot.quarantineTemp || 28.0;
+                        updateRobotMesh();
+                    }
+                } else {
+                    initializeChickens();
+                }
+
+                // Reconnect WebSocket
+                connectWebSocket();
+
+                addRobotLog('🔄 Session resumed');
+            }
+
+            // Update UI
+            document.getElementById('startSession').disabled = true;
+            document.getElementById('stopSession').disabled = false;
+            document.getElementById('statusDot').classList.add('online');
+            document.getElementById('statusText').textContent = 'Recording Active';
+            document.getElementById('recordingIndicator').classList.add('active');
+
+            document.getElementById('inactive3D').style.display = 'none';
+            document.getElementById('inactiveAI').style.display = 'none';
+            document.getElementById('hud3D').classList.add('active');
+            document.getElementById('keypointLegend').classList.add('active');
+            document.getElementById('recIndicator').style.display = 'flex';
+            document.getElementById('alertPanel').style.display = 'block';
+
+            // Start timer
+            if (sessionTimer) clearInterval(sessionTimer);
+            sessionTimer = setInterval(updateSessionTimer, 1000);
+        }
+
+        function stopSession() {
+            if (!sessionActive) return;
+
+            console.log('🛑 Stopping session...');
+            sessionActive = false;
+
+            // Generate session data
+            const sessionData = {
+                id: currentSessionId,
+                startTime: new Date(sessionStartTime).toISOString(),
+                endTime: new Date().toISOString(),
+                duration: Date.now() - sessionStartTime,
+                fps: 30,
+                frames: recordedFrames,
+                alerts: alerts,
+                summary: generateSummary()
+            };
+
+            // Save to server
+            fetch('/api/sessions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(sessionData)
+            }).then(r => r.json()).then(result => {
+                console.log('Session saved:', result);
+            }).catch(e => {
+                console.log('Saving to localStorage');
+                const sessions = JSON.parse(localStorage.getItem('chickenTwin_sessions') || '[]');
+                sessions.unshift(sessionData);
+                localStorage.setItem('chickenTwin_sessions', JSON.stringify(sessions.slice(0, 20)));
+            });
+
+            // Session manager
+            if (window.sessionManager) {
+                sessionManager.stopSession();
+            }
+
+            // Clear localStorage session state
+            localStorage.removeItem('chickenTwin_activeSession');
+
+            // Update UI
+            document.getElementById('startSession').disabled = false;
+            document.getElementById('stopSession').disabled = true;
+            document.getElementById('statusDot').classList.remove('online');
+            document.getElementById('statusText').textContent = 'Session Saved';
+            document.getElementById('recordingIndicator').classList.remove('active');
+
+            document.getElementById('inactive3D').style.display = 'flex';
+            document.getElementById('inactiveAI').style.display = 'flex';
+            document.getElementById('hud3D').classList.remove('active');
+            document.getElementById('recIndicator').style.display = 'none';
+            document.getElementById('keypointLegend').classList.remove('active');
+
+            if (sessionTimer) clearInterval(sessionTimer);
+            document.exitPointerLock();
+
+            showNotification('Session Saved', `Recorded ${recordedFrames.length} frames`, 'success');
+        }
+
+        function saveSessionState() {
+            if (!sessionActive) return;
+
+            localStorage.setItem('chickenTwin_activeSession', JSON.stringify({
+                id: currentSessionId,
+                startTime: sessionStartTime,
+                chickens: chickens.map(c => c.toJSON()),
+                quarantine: quarantineChickens.map(c => c.toJSON()),
+                robot: {
+                    status: robot.status,
+                    position: robot.position
+                }
+            }));
+        }
+
+        function loadSessionState() {
+            const saved = localStorage.getItem('chickenTwin_activeSession');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (Date.now() - data.startTime < 3600000) { // Less than 1 hour old
+                    return data;
+                }
+            }
+            return null;
+        }
+
+        function initializeChickens() {
+            // Clear existing
+            chickens.forEach((_, i) => {
+                if (chickenMeshes[i]) {
+                    scene.remove(chickenMeshes[i]);
+                    if (aiScene) aiScene.remove(aiChickenMeshes[i]);
+                }
+            });
+            chickens = [];
+            chickenMeshes = [];
+            aiChickenMeshes = [];
+
+            quarantineChickens.forEach((_, i) => {
+                if (quarantineMeshes[i]) {
+                    scene.remove(quarantineMeshes[i]);
+                    if (aiScene) aiScene.remove(aiQuarantineMeshes[i]);
+                }
+            });
+            quarantineChickens = [];
+            quarantineMeshes = [];
+            aiQuarantineMeshes = [];
+
+            // Create new chickens
+            for (let i = 0; i < CONFIG.numChickens; i++) {
+                const chicken = new Chicken(i + 1);
+                chickens.push(chicken);
+
+                const mesh = createChickenMesh(chicken);
+                chickenMeshes.push(mesh);
+                scene.add(mesh);
+
+                if (aiScene) {
+                    const aiMesh = createChickenMesh(chicken);
+                    aiChickenMeshes.push(aiMesh);
+                    aiScene.add(aiMesh);
+                }
+            }
+        }
+
+        function restoreChickensFromState(savedBirds, savedQuarantine) {
+            // Clear existing chickens
+            chickens.forEach((_, i) => {
+                if (chickenMeshes[i]) {
+                    scene.remove(chickenMeshes[i]);
+                    if (aiScene) aiScene.remove(aiChickenMeshes[i]);
+                }
+            });
+            chickens = [];
+            chickenMeshes = [];
+            aiChickenMeshes = [];
+
+            quarantineChickens.forEach((_, i) => {
+                if (quarantineMeshes[i]) {
+                    scene.remove(quarantineMeshes[i]);
+                    if (aiScene) aiScene.remove(aiQuarantineMeshes[i]);
+                }
+            });
+            quarantineChickens = [];
+            quarantineMeshes = [];
+            aiQuarantineMeshes = [];
+
+            // Restore farm chickens
+            savedBirds.forEach(savedData => {
+                const chicken = new Chicken(savedData.id);
+                // Restore position
+                chicken.x = savedData.x || chicken.x;
+                chicken.z = savedData.z || chicken.z;
+                chicken.direction = savedData.direction || 0;
+                // Restore health data
+                chicken.temperature = savedData.temperature || chicken.temperature;
+                chicken.riskScore = savedData.riskScore || 0;
+                chicken.symptoms = savedData.symptoms || chicken.symptoms;
+                chicken.inQuarantine = false;
+
+                // Restore disease if any
+                if (savedData.disease) {
+                    const diseaseKey = Object.keys(DISEASES).find(k => DISEASES[k].name === savedData.disease);
+                    if (diseaseKey) {
+                        chicken.disease = DISEASES[diseaseKey];
+                    }
+                }
+
+                chicken.updateStatus();
+                chickens.push(chicken);
+
+                const mesh = createChickenMesh(chicken);
+                mesh.position.set(chicken.x, 0, chicken.z);
+                mesh.rotation.y = chicken.direction;
+                chickenMeshes.push(mesh);
+                scene.add(mesh);
+
+                if (aiScene) {
+                    const aiMesh = createChickenMesh(chicken);
+                    aiMesh.position.set(chicken.x, 0, chicken.z);
+                    aiMesh.rotation.y = chicken.direction;
+                    aiChickenMeshes.push(aiMesh);
+                    aiScene.add(aiMesh);
+                }
+            });
+
+            // Restore quarantine chickens
+            savedQuarantine.forEach(savedData => {
+                const chicken = new Chicken(savedData.id);
+                // Restore position
+                chicken.x = savedData.x || chicken.x;
+                chicken.z = savedData.z || chicken.z;
+                chicken.direction = savedData.direction || 0;
+                // Restore health data
+                chicken.temperature = savedData.temperature || chicken.temperature;
+                chicken.riskScore = savedData.riskScore || 0;
+                chicken.symptoms = savedData.symptoms || chicken.symptoms;
+                chicken.inQuarantine = true;
+
+                // Restore disease if any
+                if (savedData.disease) {
+                    const diseaseKey = Object.keys(DISEASES).find(k => DISEASES[k].name === savedData.disease);
+                    if (diseaseKey) {
+                        chicken.disease = DISEASES[diseaseKey];
+                    }
+                }
+
+                chicken.updateStatus();
+                quarantineChickens.push(chicken);
+
+                const mesh = createChickenMesh(chicken);
+                mesh.position.set(chicken.x, 0, chicken.z);
+                mesh.rotation.y = chicken.direction;
+                quarantineMeshes.push(mesh);
+                scene.add(mesh);
+
+                if (aiScene) {
+                    const aiMesh = createChickenMesh(chicken);
+                    aiMesh.position.set(chicken.x, 0, chicken.z);
+                    aiMesh.rotation.y = chicken.direction;
+                    aiQuarantineMeshes.push(aiMesh);
+                    aiScene.add(aiMesh);
+                }
+            });
+
+            console.log(`✅ Restored ${chickens.length} farm birds + ${quarantineChickens.length} quarantined`);
+        }
+
+        function generateSummary() {
+            const allBirds = [...chickens, ...quarantineChickens];
+            if (allBirds.length === 0) return {};
+
+            const temps = allBirds.map(c => c.temperature);
+            const risks = allBirds.map(c => c.riskScore);
+            const healthy = chickens.filter(c => c.status === 'healthy').length;
+
+            return {
+                totalBirds: CONFIG.numChickens,
+                quarantined: quarantineChickens.length,
+                avgHealthScore: ((healthy / Math.max(1, chickens.length)) * 100).toFixed(1),
+                avgTemperature: (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(2),
+                minTemperature: Math.min(...temps).toFixed(2),
+                maxTemperature: Math.max(...temps).toFixed(2),
+                avgRiskScore: (risks.reduce((a, b) => a + b, 0) / risks.length).toFixed(3),
+                totalAlerts: alerts.length
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // WEBSOCKET
+        // ═══════════════════════════════════════════════════════════════
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+
+            try {
+                ws = new WebSocket('ws://localhost:8765');
+
+                ws.onopen = () => {
+                    wsConnected = true;
+                    console.log('WebSocket connected');
+                    addRobotLog('🔗 WebSocket connected');
+
+                    ws.send(JSON.stringify({
+                        type: 'session_start',
+                        sessionId: currentSessionId
+                    }));
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (e) {
+                        console.error('WebSocket message error:', e);
+                    }
+                };
+
+                ws.onclose = () => {
+                    wsConnected = false;
+                    console.log('WebSocket disconnected');
+                };
+
+                ws.onerror = (error) => {
+                    console.log('WebSocket error (server may not be running)');
+                };
+            } catch (e) {
+                console.log('WebSocket not available');
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'ai_decision':
+                    addRobotLog(`🤖 AI: ${data.data.ai_response || 'Processing...'}`);
+                    break;
+                case 'robot_update':
+                    // Handle robot status updates
+                    break;
+                case 'alert':
+                    addAlert(data.data);
+                    break;
+            }
+        }
+
+        function sendWebSocketUpdate() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            ws.send(JSON.stringify({
+                type: 'chicken_update',
+                chickens: chickens.map(c => c.toJSON()),
+                quarantine: quarantineChickens.map(c => c.toJSON()),
+                robot: {
+                    status: robot.status,
+                    position: robot.position
+                }
+            }));
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // ROBOT CONTROL
+        // ═══════════════════════════════════════════════════════════════
+        function updateRobot(deltaTime) {
+            if (!sessionActive) return;
+
+            const speed = CONFIG.robot.speed;
+            const armSpeed = CONFIG.robot.armSpeed;
+
+            // Update status light color
+            if (robotGroup) {
+                const light = robotGroup.getObjectByName('statusLight');
+                if (light) {
+                    const color = robot.status === 'idle' ? 0x00ff00 :
+                        robot.status.includes('inject') ? 0xff00ff :
+                            0xffff00;
+                    light.material.color.setHex(color);
+                }
+            }
+
+            switch (robot.status) {
+                case 'idle':
+                    // Auto-detect critical chickens
+                    const critical = chickens.find(c =>
+                        c.riskScore >= 0.75 && !c.inQuarantine && !c.isBeingCarried &&
+                        (c.disease || c.symptoms.bloody_diarrhea > 0.3)
+                    );
+
+                    if (critical) {
+                        robot.target = critical;
+                        robot.status = 'moving_to_chicken';
+
+                        // Show arm when activated
+                        if (robotGroup) {
+                            const ag = robotGroup.getObjectByName('armGroup');
+                            const ee = robotGroup.getObjectByName('endEffector');
+                            if (ag) ag.visible = true;
+                            if (ee) ee.visible = true;
+                        }
+                        if (aiRobotGroup) {
+                            const ag = aiRobotGroup.getObjectByName('armGroup');
+                            const ee = aiRobotGroup.getObjectByName('endEffector');
+                            if (ag) ag.visible = true;
+                            if (ee) ee.visible = true;
+                        }
+
+                        const symptoms = critical.getActiveSymptoms();
+                        const symptomText = symptoms.slice(0, 2).map(s => s.name).join(', ');
+
+                        addRobotLog(`🚨 Critical bird detected: #${critical.id}`);
+                        addRobotLog(`   Risk: ${(critical.riskScore * 100).toFixed(0)}%`);
+                        if (critical.disease) {
+                            addRobotLog(`   Disease: ${critical.disease.name}`);
+                        }
+                        addRobotLog(`   Symptoms: ${symptomText}`);
+                        addRobotLog(`🤖 Dispatching robot...`);
+
+                        addAlert({
+                            type: 'critical',
+                            chickenId: critical.id,
+                            riskScore: critical.riskScore,
+                            disease: critical.disease?.name,
+                            symptoms: symptoms.slice(0, 3)
+                        });
+                    }
+                    break;
+
+                case 'moving_to_chicken':
+                    if (robot.target) {
+                        const dx = robot.target.x - robot.position.x;
+                        const dz = robot.target.z - robot.position.z;
+                        const dist = Math.sqrt(dx * dx + dz * dz);
+
+                        if (dist > 0.5) {
+                            robot.position.x += (dx / dist) * speed;
+                            robot.position.z += (dz / dist) * speed;
+                            updateRobotMesh();
+                        } else {
+                            robot.status = 'extending_arm';
+                            robot.armExtension = 0;
+                            addRobotLog(`📍 Arrived at bird #${robot.target.id}`);
+                        }
+                    }
+                    break;
+
+                case 'extending_arm':
+                    robot.armExtension += armSpeed;
+                    updateRobotArm();
+
+                    if (robot.armExtension >= 1) {
+                        // Decide action based on disease
+                        if (robot.target.disease &&
+                            ['coccidiosis', 'infectiousBronchitis', 'fowlCholera'].includes(
+                                Object.keys(DISEASES).find(k => DISEASES[k] === robot.target.disease)
+                            )) {
+                            robot.status = 'injecting_vaccine';
+                            robot.injecting = true;
+                            addRobotLog(`💉 Administering treatment...`);
+                        } else {
+                            robot.status = 'picking_up';
+                            addRobotLog(`🦾 Capturing bird...`);
+                        }
+                    }
+                    break;
+
+                case 'injecting_vaccine':
+                    // Show needle
+                    if (robotGroup) {
+                        const needle = robotGroup.getObjectByName('needle');
+                        if (needle) needle.visible = true;
+                    }
+
+                    robot.armExtension += 0.01; // Slow animation
+
+                    if (robot.armExtension >= 1.3) {
+                        robot.injecting = false;
+
+                        // Treatment applied - reduce disease progression
+                        if (robot.target) {
+                            robot.target.diseaseProgression = Math.max(0, robot.target.diseaseProgression - 0.3);
+
+                            // Reduce symptoms
+                            for (const symptom of Object.keys(robot.target.symptoms)) {
+                                robot.target.symptoms[symptom] *= 0.5;
+                            }
+                        }
+
+                        if (robotGroup) {
+                            const needle = robotGroup.getObjectByName('needle');
+                            if (needle) needle.visible = false;
+                        }
+
+                        addRobotLog(`✅ Treatment administered to #${robot.target.id}`);
+                        robot.status = 'picking_up';
+                    }
+                    break;
+
+                case 'picking_up':
+                    // Just wait a moment before picking up
+                    setTimeout(() => {
+                        if (robot.target && robot.status === 'picking_up') {
+                            robot.target.isBeingCarried = true;
+                            robot.carrying = robot.target;
+                            robot.status = 'retracting_with_bird';
+                            addRobotLog(`📦 Bird secured, retracting...`);
+                        }
+                    }, 500);
+                    break;
+
+                case 'retracting_with_bird':
+                    robot.armExtension -= armSpeed;
+                    updateRobotArm();
+
+                    // Move chicken with gripper
+                    if (robot.carrying) {
+                        const idx = chickens.indexOf(robot.carrying);
+                        if (idx !== -1 && chickenMeshes[idx]) {
+                            chickenMeshes[idx].position.x = robot.position.x;
+                            chickenMeshes[idx].position.z = robot.position.z;
+                            chickenMeshes[idx].position.y = CONFIG.farmHeight - 3 - robot.armExtension * 2;
+                            // Also update AI view mesh
+                            if (aiChickenMeshes[idx]) {
+                                aiChickenMeshes[idx].position.copy(chickenMeshes[idx].position);
+                            }
+                        }
+                    }
+
+                    if (robot.armExtension <= 0) {
+                        robot.status = 'moving_to_quarantine';
+                        addRobotLog(`🚚 Transporting to quarantine...`);
+                    }
+                    break;
+
+                case 'moving_to_quarantine':
+                    const qX = CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1;
+                    const qZ = CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1;
+
+                    const dx = qX - robot.position.x;
+                    const dz = qZ - robot.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist > 1) {
+                        robot.position.x += (dx / dist) * speed;
+                        robot.position.z += (dz / dist) * speed;
+                        updateRobotMesh();
+
+                        // Update carried chicken position
+                        if (robot.carrying) {
+                            const idx = chickens.indexOf(robot.carrying);
+                            if (idx !== -1 && chickenMeshes[idx]) {
+                                chickenMeshes[idx].position.x = robot.position.x;
+                                chickenMeshes[idx].position.z = robot.position.z;
+                                if (aiChickenMeshes[idx]) {
+                                    aiChickenMeshes[idx].position.copy(chickenMeshes[idx].position);
+                                }
+                            }
+                        }
+                    } else {
+                        robot.status = 'dropping_in_quarantine';
+                        addRobotLog(`📍 Arrived at quarantine`);
+                    }
+                    break;
+
+                case 'dropping_in_quarantine':
+                    if (robot.carrying) {
+                        const idx = chickens.indexOf(robot.carrying);
+                        if (idx !== -1) {
+                            // Move from main to quarantine
+                            const chicken = chickens.splice(idx, 1)[0];
+                            const mesh = chickenMeshes.splice(idx, 1)[0];
+                            const aiMesh = aiChickenMeshes.splice(idx, 1)[0];
+
+                            // Update chicken state
+                            chicken.inQuarantine = true;
+                            chicken.isBeingCarried = false;
+                            chicken.x = CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1 + (Math.random() - 0.5) * (CONFIG.quarantineSize - 4);
+                            chicken.z = CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1 + (Math.random() - 0.5) * (CONFIG.quarantineSize - 4);
+
+                            // Update mesh position
+                            mesh.position.set(chicken.x, 0, chicken.z);
+                            mesh.position.y = 0;
+
+                            if (aiMesh) {
+                                aiMesh.position.set(chicken.x, 0, chicken.z);
+                                aiMesh.position.y = 0;
+                            }
+
+                            // Add to quarantine arrays
+                            quarantineChickens.push(chicken);
+                            quarantineMeshes.push(mesh);
+                            aiQuarantineMeshes.push(aiMesh);
+
+                            // Calculate quarantine temperature based on bird's condition
+                            let targetTemp = 28.0;
+                            if (chicken.temperature > 42.5) {
+                                targetTemp = 24.0; // Cooling for fever
+                            } else if (chicken.temperature < 38.0) {
+                                targetTemp = 32.0; // Warming for hypothermia
+                            }
+                            robot.quarantineTemp = targetTemp;
+
+                            addRobotLog(`✅ Bird #${chicken.id} placed in quarantine`);
+                            addRobotLog(`🌡️ Q-temp adjusted to ${targetTemp}°C`);
+
+                            // Add to alerts
+                            addAlert({
+                                type: 'info',
+                                chickenId: chicken.id,
+                                message: `Bird quarantined (${chicken.disease ? chicken.disease.name : 'High risk'})`
+                            });
+
+                            // Send WebSocket update
+                            sendWebSocketUpdate();
+                        }
+
+                        robot.carrying = null;
+                        robot.target = null;
+                        robot.status = 'returning_home';
+                    }
+                    break;
+
+                case 'returning_home':
+                    const homeX = 0;
+                    const homeZ = 0;
+
+                    const dhx = homeX - robot.position.x;
+                    const dhz = homeZ - robot.position.z;
+                    const homeDist = Math.sqrt(dhx * dhx + dhz * dhz);
+
+                    if (homeDist > 0.5) {
+                        robot.position.x += (dhx / homeDist) * speed;
+                        robot.position.z += (dhz / homeDist) * speed;
+                        updateRobotMesh();
+                    } else {
+                        robot.status = 'idle';
+                        robot.position.x = 0;
+                        robot.position.z = 0;
+                        addRobotLog(`⏸️ Robot idle`);
+
+                        // Ensure arm is visible (fix for disappearance bug)
+                        if (robotGroup) {
+                            const ag = robotGroup.getObjectByName('armGroup');
+                            const ee = robotGroup.getObjectByName('endEffector');
+                            if (ag) ag.visible = true;
+                            if (ee) ee.visible = true;
+                        }
+                        if (aiRobotGroup) {
+                            const ag = aiRobotGroup.getObjectByName('armGroup');
+                            const ee = aiRobotGroup.getObjectByName('endEffector');
+                            if (ag) ag.visible = true;
+                            if (ee) ee.visible = true;
+                        }
+                    }
+                    break;
+            }
+        }
+
+        function updateRobotMesh() {
+            if (!robotGroup) return;
+
+            const carriage = robotGroup.getObjectByName('carriage');
+            const motor = robotGroup.getObjectByName('motor');
+            const armGroup = robotGroup.getObjectByName('armGroup');
+
+            if (carriage) {
+                carriage.position.x = robot.position.x;
+                carriage.position.z = robot.position.z;
+            }
+            if (motor) {
+                motor.position.x = robot.position.x;
+                motor.position.z = robot.position.z;
+            }
+            if (armGroup) {
+                armGroup.position.x = robot.position.x;
+                armGroup.position.z = robot.position.z;
+            }
+
+            // Also update AI view robot
+            if (aiRobotGroup) {
+                const aiCarriage = aiRobotGroup.getObjectByName('carriage');
+                const aiMotor = aiRobotGroup.getObjectByName('motor');
+                const aiArmGroup = aiRobotGroup.getObjectByName('armGroup');
+
+                if (aiCarriage) {
+                    aiCarriage.position.x = robot.position.x;
+                    aiCarriage.position.z = robot.position.z;
+                }
+                if (aiMotor) {
+                    aiMotor.position.x = robot.position.x;
+                    aiMotor.position.z = robot.position.z;
+                }
+                if (aiArmGroup) {
+                    aiArmGroup.position.x = robot.position.x;
+                    aiArmGroup.position.z = robot.position.z;
+                }
+            }
+        }
+
+        function updateRobotArm() {
+            if (!robotGroup) return;
+
+            const armGroup = robotGroup.getObjectByName('armGroup');
+            const endEffector = robotGroup.getObjectByName('endEffector');
+
+            if (armGroup && endEffector) {
+                // Telescoping logic:
+                // When robot.armExtension is 0, segments are collapsed inside each other (small offset).
+                // When robot.armExtension is 1, they spread out to max length.
+
+                const segmentCount = armGroup.children.length;
+                const collapsedSpacing = 0.4; // Hanging visibly when retracted
+                const extendedSpacing = 1.0;   // Max spread (keep some overlap)
+
+                const currentSpacing = collapsedSpacing + (extendedSpacing - collapsedSpacing) * robot.armExtension;
+
+                // Position segments
+                armGroup.children.forEach((segmentMesh, i) => {
+                    segmentMesh.position.y = -i * currentSpacing;
+                });
+
+                // End effector attaches to the bottom of the last segment
+                const lastSegmentIndex = segmentCount - 1;
+                const lastSegmentY = -lastSegmentIndex * currentSpacing;
+
+                // End effector needs to be below the last segment
+                // The gripper base is at y=-0.1 relative to endEffector group
+                // We want endEffector group to be at the tip of the last segment
+                endEffector.position.y = lastSegmentY - 0.6; // Adjust based on segment length/visuals
+
+                // Also update AI view
+                if (aiRobotGroup) {
+                    const aiArmGroup = aiRobotGroup.getObjectByName('armGroup');
+                    const aiEndEffector = aiRobotGroup.getObjectByName('endEffector');
+
+                    if (aiArmGroup && aiEndEffector) {
+                        aiArmGroup.children.forEach((segmentMesh, i) => {
+                            segmentMesh.position.y = -i * currentSpacing;
+                        });
+                        aiEndEffector.position.y = endEffector.position.y;
+                    }
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // KEYPOINT RENDERING (AI View)
+        // ═══════════════════════════════════════════════════════════════
+        function renderKeypoints() {
+            if (!keypointCtx || !sessionActive) return;
+
+            const width = keypointCanvas.width;
+            const height = keypointCanvas.height;
+
+            // Clear canvas
+            keypointCtx.clearRect(0, 0, width, height);
+
+            if (!CONFIG.display.showKeypoints && !CONFIG.display.showSkeleton && !CONFIG.display.showLabels) {
+                return;
+            }
+
+            // Calculate scale based on farm size
+            const padding = 20;
+            const farmW = CONFIG.farmSize * 8; // Scale factor
+            const farmH = farmW;
+            const offsetX = (width - farmW) / 2;
+            const offsetY = (height - farmH) / 2;
+
+            // Draw farm boundary
+            keypointCtx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+            keypointCtx.lineWidth = 2;
+            keypointCtx.strokeRect(offsetX, offsetY, farmW, farmH);
+
+            // Draw quarantine boundary
+            const qSize = CONFIG.quarantineSize * 8;
+            const qOffsetX = offsetX + farmW - qSize - 20;
+            const qOffsetY = offsetY + farmH - qSize - 20;
+            keypointCtx.strokeStyle = 'rgba(255, 100, 100, 0.5)';
+            keypointCtx.strokeRect(qOffsetX, qOffsetY, qSize, qSize);
+
+            // Render all chickens and their traces
+            const allChickens = [...chickens, ...quarantineChickens];
+
+            // 1. Draw Feces Layer (Ground level)
+            allChickens.forEach(chicken => {
+                if (chicken.fecesPositions && chicken.fecesPositions.length > 0) {
+                    chicken.fecesPositions.forEach(feces => {
+                        let screenX, screenY;
+                        // Logic to map world to screen (same as chicken)
+                        if (chicken.inQuarantine) { // This check is tricky if feces was left before quarantine?
+                            // Actually feces stores x/z. We should check bounds or just map X/Z directly.
+                            // Simplified: Check if inside quarantine box coords
+                            const qHalf = CONFIG.quarantineSize / 2;
+                            const qCenter = CONFIG.farmSize / 2 - qHalf - 1;
+                            if (Math.abs(feces.x - qCenter) < qHalf && Math.abs(feces.z - qCenter) < qHalf) {
+                                const relX = feces.x - qCenter;
+                                const relZ = feces.z - qCenter;
+                                screenX = qOffsetX + (relX + qHalf) / CONFIG.quarantineSize * qSize;
+                                screenY = qOffsetY + (relZ + qHalf) / CONFIG.quarantineSize * qSize;
+                            } else {
+                                screenX = offsetX + (feces.x + CONFIG.farmSize / 2) / CONFIG.farmSize * farmW;
+                                screenY = offsetY + (feces.z + CONFIG.farmSize / 2) / CONFIG.farmSize * farmH;
+                            }
+                        } else {
+                            // Assuming standard mapping check
+                            const qHalf = CONFIG.quarantineSize / 2;
+                            const qCenter = CONFIG.farmSize / 2 - qHalf - 1;
+                            // Heuristic: if close to quarantine center
+                            if (Math.abs(feces.x - qCenter) < qHalf && Math.abs(feces.z - qCenter) < qHalf) {
+                                const relX = feces.x - qCenter;
+                                const relZ = feces.z - qCenter;
+                                screenX = qOffsetX + (relX + qHalf) / CONFIG.quarantineSize * qSize;
+                                screenY = qOffsetY + (relZ + qHalf) / CONFIG.quarantineSize * qSize;
+                            } else {
+                                screenX = offsetX + (feces.x + CONFIG.farmSize / 2) / CONFIG.farmSize * farmW;
+                                screenY = offsetY + (feces.z + CONFIG.farmSize / 2) / CONFIG.farmSize * farmH;
+                            }
+                        }
+
+                        // Draw Feces
+                        keypointCtx.beginPath();
+                        if (feces.type === 'bloody') keypointCtx.fillStyle = 'rgba(200, 0, 0, 0.6)';
+                        else if (feces.type === 'green') keypointCtx.fillStyle = 'rgba(50, 200, 50, 0.6)';
+                        else if (feces.type === 'watery') keypointCtx.fillStyle = 'rgba(150, 100, 50, 0.4)';
+                        else keypointCtx.fillStyle = 'rgba(100, 80, 40, 0.5)'; // Normal
+
+                        keypointCtx.arc(screenX, screenY, 2, 0, Math.PI * 2);
+                        keypointCtx.fill();
+                    });
+                }
+            });
+
+            allChickens.forEach(chicken => {
+                if (chicken.isBeingCarried) return;
+
+                // Calculate screen position
+                let screenX, screenY;
+
+                if (chicken.inQuarantine) {
+                    const relX = chicken.x - (CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1);
+                    const relZ = chicken.z - (CONFIG.farmSize / 2 - CONFIG.quarantineSize / 2 - 1);
+                    screenX = qOffsetX + (relX + CONFIG.quarantineSize / 2) / CONFIG.quarantineSize * qSize;
+                    screenY = qOffsetY + (relZ + CONFIG.quarantineSize / 2) / CONFIG.quarantineSize * qSize;
+                } else {
+                    screenX = offsetX + (chicken.x + CONFIG.farmSize / 2) / CONFIG.farmSize * farmW;
+                    screenY = offsetY + (chicken.z + CONFIG.farmSize / 2) / CONFIG.farmSize * farmH;
+                }
+
+                const color = chicken.getColorScheme();
+                const scale = 0.8;
+
+                // Draw bounding box if enabled
+                if (CONFIG.display.showLabels) {
+                    const boxSize = 30;
+                    keypointCtx.strokeStyle = color.main;
+                    keypointCtx.lineWidth = chicken.riskScore >= 0.8 ? 3 : 2;
+
+                    if (chicken.riskScore >= 0.8) {
+                        // Pulsing effect for critical
+                        const pulse = (Math.sin(Date.now() / 300) + 1) / 2;
+                        keypointCtx.setLineDash([5, 5]);
+                        keypointCtx.globalAlpha = 0.5 + pulse * 0.5;
+                    }
+
+                    keypointCtx.strokeRect(screenX - boxSize / 2, screenY - boxSize / 2, boxSize, boxSize);
+                    keypointCtx.setLineDash([]);
+                    keypointCtx.globalAlpha = 1;
+
+                    // Draw ID and risk
+                    keypointCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    keypointCtx.fillRect(screenX - 25, screenY - boxSize / 2 - 20, 50, 16);
+
+                    keypointCtx.fillStyle = '#fff';
+                    keypointCtx.font = 'bold 10px Inter';
+                    keypointCtx.textAlign = 'center';
+                    keypointCtx.fillText(`#${chicken.id}`, screenX - 10, screenY - boxSize / 2 - 8);
+
+                    keypointCtx.fillStyle = color.main;
+                    keypointCtx.fillText(`${(chicken.riskScore * 100).toFixed(0)}%`, screenX + 12, screenY - boxSize / 2 - 8);
+
+                    // Draw temperature
+                    keypointCtx.fillStyle = chicken.temperature > 42 || chicken.temperature < 38 ? '#ff4444' : '#4ade80';
+                    keypointCtx.fillText(`${chicken.temperature.toFixed(1)}°C`, screenX, screenY + boxSize / 2 + 12);
+                }
+
+                // Draw keypoints if enabled
+                if (CONFIG.display.showKeypoints) {
+                    const kps = chicken.getScreenKeypoints(screenX, screenY, scale);
+
+                    // Draw skeleton if enabled
+                    if (CONFIG.display.showSkeleton) {
+                        keypointCtx.strokeStyle = color.main;
+                        keypointCtx.lineWidth = 1.5;
+                        keypointCtx.globalAlpha = 0.6;
+
+                        // Define connections
+                        const connections = [
+                            [0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 18], // Head to tail
+                            [4, 6], [6, 7], [7, 8], // Left wing
+                            [4, 9], [9, 10], [10, 11], // Right wing
+                            [4, 12], [12, 13], [13, 14], // Left leg
+                            [4, 15], [15, 16], [16, 17] // Right leg
+                        ];
+
+                        connections.forEach(([from, to]) => {
+                            if (kps[from] && kps[to]) {
+                                keypointCtx.beginPath();
+                                keypointCtx.moveTo(kps[from].x, kps[from].y);
+                                keypointCtx.lineTo(kps[to].x, kps[to].y);
+                                keypointCtx.stroke();
+                            }
+                        });
+
+                        keypointCtx.globalAlpha = 1;
+                    }
+
+                    // Draw keypoints
+                    kps.forEach(kp => {
+                        // Glow
+                        const gradient = keypointCtx.createRadialGradient(kp.x, kp.y, 0, kp.x, kp.y, 6);
+                        gradient.addColorStop(0, color.glow);
+                        gradient.addColorStop(1, 'transparent');
+                        keypointCtx.fillStyle = gradient;
+                        keypointCtx.beginPath();
+                        keypointCtx.arc(kp.x, kp.y, 6, 0, Math.PI * 2);
+                        keypointCtx.fill();
+
+                        // Point
+                        keypointCtx.fillStyle = color.main;
+                        keypointCtx.beginPath();
+                        keypointCtx.arc(kp.x, kp.y, 3, 0, Math.PI * 2);
+                        keypointCtx.fill();
+                    });
+                }
+
+                // Draw symptom icons
+                const symptoms = chicken.getActiveSymptoms();
+                if (symptoms.length > 0) {
+                    keypointCtx.font = '14px Arial';
+                    symptoms.slice(0, 2).forEach((sym, i) => {
+                        if (sym.visual) {
+                            keypointCtx.fillText(sym.visual.icon, screenX + 15, screenY - 10 + (i * 16));
+                        }
+                    });
+                }
+            });
+
+            // Draw robot position
+            const robotScreenX = offsetX + (robot.position.x + CONFIG.farmSize / 2) / CONFIG.farmSize * farmW;
+            const robotScreenY = offsetY + (robot.position.z + CONFIG.farmSize / 2) / CONFIG.farmSize * farmH;
+
+            keypointCtx.fillStyle = '#00ccff';
+            keypointCtx.beginPath();
+            keypointCtx.arc(robotScreenX, robotScreenY, 8, 0, Math.PI * 2);
+            keypointCtx.fill();
+
+            keypointCtx.fillStyle = '#000';
+            keypointCtx.font = 'bold 12px Arial';
+            keypointCtx.textAlign = 'center';
+            keypointCtx.fillText('🤖', robotScreenX, robotScreenY + 4);
+
+            // Update legend stats
+            document.getElementById('legendActive').textContent = allBirds.length;
+            document.getElementById('legendFlagged').textContent = allBirds.filter(c => c.riskScore >= 0.4).length;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // UI HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        function addRobotLog(message) {
+            const content = document.getElementById('robotLogContent');
+            const emptyMsg = content.querySelector('div');
+            if (emptyMsg && emptyMsg.style.fontStyle === 'italic') {
+                emptyMsg.remove();
+            }
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span> ${message}`;
+            content.insertBefore(entry, content.firstChild);
+
+            while (content.children.length > 20) {
+                content.removeChild(content.lastChild);
+            }
+        }
+
+        function addAlert(alert) {
+            alerts.push(alert);
+
+            const panel = document.getElementById('alertPanelContent');
+            const badge = document.getElementById('alertBadge');
+
+            // Clear "No alerts" message
+            if (panel.children.length === 1 && panel.children[0].textContent === 'No alerts') {
+                panel.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = `alert-item ${alert.type || 'info'}`;
+
+            let icon = '⚠️';
+            if (alert.type === 'critical') icon = '🚨';
+            if (alert.type === 'info') icon = 'ℹ️';
+
+            const symptomsHtml = alert.symptoms ?
+                alert.symptoms.map(s => `<div style="font-size: 9px; color: #aaa;">• ${s.name || s}</div>`).join('') : '';
+
+            item.innerHTML = `
+            <span class="alert-icon">${icon}</span>
+            <div class="alert-content">
+                <div class="alert-title">Bird #${alert.chickenId} ${alert.disease ? `(${alert.disease})` : ''}</div>
+                <div class="alert-detail">${alert.message || `Risk: ${(alert.riskScore * 100).toFixed(0)}%`}</div>
+                ${symptomsHtml}
+            </div>
+            <span class="alert-time">${new Date().toLocaleTimeString()}</span>
+        `;
+
+            panel.insertBefore(item, panel.firstChild);
+            badge.textContent = alerts.length;
+        }
+
+        function showNotification(title, message, type) {
+            const container = document.getElementById('notificationsContainer');
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 4px;">${title}</div>
+            <div style="font-size: 12px; opacity: 0.9;">${message}</div>
+        `;
+            container.appendChild(notif);
+
+            setTimeout(() => {
+                notif.style.opacity = '0';
+                notif.style.transform = 'translateX(100px)';
+                setTimeout(() => notif.remove(), 300);
+            }, 4000);
+        }
+
+        function updateSessionTimer() {
+            if (!sessionStartTime) return;
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+            const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+            const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+            const s = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('sessionTimer').textContent = `${h}:${m}:${s}`;
+
+            // Update CCTV Timestamp
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('cctvTimestamp').textContent = `${dateStr} ${timeStr}`;
+        }
+
+        function updateStats() {
+            const allBirds = [...chickens, ...quarantineChickens];
+            const healthy = chickens.filter(c => c.status === 'healthy').length;
+            const warning = chickens.filter(c => c.status === 'warning').length;
+            const critical = chickens.filter(c => c.status === 'critical' || c.status === 'elevated').length;
+
+            document.getElementById('statTotal').textContent = allBirds.length;
+            document.getElementById('statHealthy').textContent = healthy;
+            document.getElementById('statWarning').textContent = warning;
+            document.getElementById('statCritical').textContent = critical;
+            document.getElementById('statQuarantine').textContent = quarantineChickens.length;
+
+            const healthScore = allBirds.length > 0 ? Math.round((healthy / chickens.length) * 100) : 0;
+            document.getElementById('statHealthScore').textContent = `${healthScore}%`;
+
+            // Update HUD
+            document.getElementById('hudRobotStatus').textContent = robot.status.replace(/_/g, ' ').toUpperCase();
+            document.getElementById('hudQuarantineCount').textContent = quarantineChickens.length;
+            document.getElementById('hudQuarantineTemp').textContent = `${robot.quarantineTemp.toFixed(1)}°C`;
+
+            if (camera) {
+                const pos = camera.position;
+                document.getElementById('hudCameraPos').textContent = `${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}`;
+            }
+
+            // Sync to localStorage for dashboard page
+            const temps = allBirds.map(c => c.temperature);
+            const avgTemp = temps.length > 0 ? temps.reduce((a, b) => a + b, 0) / temps.length : 40;
+            const minTemp = temps.length > 0 ? Math.min(...temps) : 40;
+            const maxTemp = temps.length > 0 ? Math.max(...temps) : 40;
+
+            localStorage.setItem('chickenTwin_dashboard', JSON.stringify({
+                active: sessionActive,
+                sessionId: currentSessionId,
+                healthy: healthy,
+                warning: warning,
+                critical: critical,
+                quarantine: quarantineChickens.length,
+                healthScore: healthScore,
+                avgTemp: avgTemp,
+                minTemp: minTemp,
+                maxTemp: maxTemp,
+                robotStatus: robot.status,
+                robotPosition: `(${robot.position.x.toFixed(1)}, ${robot.position.z.toFixed(1)})`,
+                quarantineTemp: robot.quarantineTemp,
+                timestamp: Date.now()
+            }));
+
+            // Sync alerts to localStorage
+            localStorage.setItem('chickenTwin_alerts', JSON.stringify(
+                alerts.slice(0, 50).map(a => ({
+                    ...a,
+                    sessionId: currentSessionId,
+                    time: a.time || new Date().toISOString(),
+                    temperature: a.temperature || avgTemp
+                }))
+            ));
+        }
+
+        function updateCameraMovement() {
+            if (!sessionActive || !camera) return;
+
+            const dir = new THREE.Vector3();
+            const right = new THREE.Vector3();
+
+            camera.getWorldDirection(dir);
+            right.crossVectors(camera.up, dir).normalize().negate();
+
+            if (moveForward) camera.position.addScaledVector(dir, moveSpeed);
+            if (moveBackward) camera.position.addScaledVector(dir, -moveSpeed);
+            if (moveLeft) camera.position.addScaledVector(right, -moveSpeed);
+            if (moveRight) camera.position.addScaledVector(right, moveSpeed);
+            if (moveUp) camera.position.y += moveSpeed;
+            if (moveDown) camera.position.y -= moveSpeed;
+
+            camera.position.y = Math.max(1, Math.min(50, camera.position.y));
+        }
+
+        function recordFrame() {
+            if (!sessionActive || !camera) return;
+
+            recordedFrames.push({
+                t: Date.now() - sessionStartTime,
+                cam: {
+                    x: +camera.position.x.toFixed(2),
+                    y: +camera.position.y.toFixed(2),
+                    z: +camera.position.z.toFixed(2),
+                    rx: +euler.x.toFixed(4),
+                    ry: +euler.y.toFixed(4)
+                },
+                chickens: chickens.map(c => c.toJSON()),
+                quarantine: quarantineChickens.map(c => c.toJSON()),
+                robot: {
+                    x: +robot.position.x.toFixed(2),
+                    z: +robot.position.z.toFixed(2),
+                    s: robot.status,
+                    arm: +robot.armExtension.toFixed(2)
+                }
+            });
+
+            // Keep only last 10000 frames to prevent memory issues
+            if (recordedFrames.length > 10000) {
+                recordedFrames = recordedFrames.slice(-10000);
+            }
+        }
+
+        function renderKeypoints() {
+            if (!keypointCtx || !aiCamera || !sessionActive) {
+                if (keypointCtx) keypointCtx.clearRect(0, 0, keypointCanvas.width, keypointCanvas.height);
+                return;
+            }
+
+            const width = keypointCanvas.width;
+            const height = keypointCanvas.height;
+            keypointCtx.clearRect(0, 0, width, height);
+
+            const tKey = document.getElementById('toggleKeypoints');
+            const showKeypoints = tKey ? tKey.checked : true; // Default to true if control removed
+
+            const tSkel = document.getElementById('toggleSkeleton');
+            const showSkeleton = tSkel ? tSkel.checked : true;
+
+            const tLabel = document.getElementById('toggleLabels');
+            const showLabels = tLabel ? tLabel.checked : true;
+
+            if (!showKeypoints && !showSkeleton && !showLabels) return;
+
+            const allBirds = [...chickens, ...quarantineChickens];
+            let activeCount = 0;
+            let flaggedCount = 0;
+
+            allBirds.forEach(chicken => {
+                activeCount++;
+                if (chicken.status !== 'healthy') flaggedCount++;
+
+                // Project Chicken Center (for label)
+                const centerPos = new THREE.Vector3(chicken.x, 0.5, chicken.z);
+                centerPos.project(aiCamera);
+
+                // Convert normalized coordinates to screen coordinates
+                const screenX = (centerPos.x * 0.5 + 0.5) * width;
+                const screenY = -(centerPos.y * 0.5 - 0.5) * height;
+
+                // Don't render if outside field of view (simple check with margin)
+                if (screenX < -50 || screenX > width + 50 || screenY < -50 || screenY > height + 50) return;
+
+                // Draw Label
+                if (showLabels) {
+                    // Only show simple ID for green style
+                    keypointCtx.font = 'bold 10px Inter';
+                    keypointCtx.fillStyle = '#00ff00'; // Green text
+                    keypointCtx.textAlign = 'center';
+                    keypointCtx.fillText(`#${chicken.id}`, screenX, screenY - 25);
+                }
+
+                if (showKeypoints || showSkeleton) {
+                    // Logic to get screen keypoints
+                    const distance = aiCamera.position.distanceTo(centerPos);
+                    const scale = 200 / distance;
+                    const kps = chicken.getScreenKeypoints(screenX, screenY, scale / 50);
+
+                    const greenColor = '#00ff00'; // Standard Green
+
+                    // Draw Skeleton connections
+                    if (showSkeleton) {
+                        keypointCtx.strokeStyle = greenColor;
+                        keypointCtx.lineWidth = 0.5; // Very fine lines
+                        keypointCtx.globalAlpha = 0.3; // Very transparent
+                        keypointCtx.beginPath();
+
+                        const connections = [
+                            [0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 18], // Spine
+                            [4, 6], [6, 7], [7, 8], // Left wing
+                            [4, 9], [9, 10], [10, 11], // Right wing
+                            [5, 12], [12, 13], [13, 14], // Left leg
+                            [5, 15], [15, 16], [16, 17] // Right leg
+                        ];
+
+                        const kpMap = {};
+                        kps.forEach(kp => kpMap[kp.id] = kp);
+
+                        connections.forEach(([id1, id2]) => {
+                            const p1 = kpMap[id1];
+                            const p2 = kpMap[id2];
+                            if (p1 && p2) {
+                                keypointCtx.moveTo(p1.x, p1.y);
+                                keypointCtx.lineTo(p2.x, p2.y);
+                            }
+                        });
+                        keypointCtx.stroke();
+                        keypointCtx.globalAlpha = 1;
+                    }
+
+                    // Draw Keypoints
+                    if (showKeypoints) {
+                        kps.forEach(kp => {
+                            keypointCtx.fillStyle = greenColor;
+                            keypointCtx.globalAlpha = 0.4; // Faint dots
+                            keypointCtx.beginPath();
+                            keypointCtx.arc(kp.x, kp.y, 1.0, 0, Math.PI * 2); // Tiny dots
+                            keypointCtx.fill();
+                        });
+                        keypointCtx.globalAlpha = 1;
+                    }
+                }
+            });
+
+            // Update Legend Stats
+            const activeEl = document.getElementById('legendActive');
+            if (activeEl) activeEl.textContent = activeCount;
+            const flaggedEl = document.getElementById('legendFlagged');
+            if (flaggedEl) flaggedEl.textContent = flaggedCount;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // MAIN ANIMATION LOOP
+        // ═══════════════════════════════════════════════════════════════
+        let lastTime = 0;
+        let frameCount = 0;
+
+        function captureFrame() {
+            if (!sessionActive) return;
+
+            // Capture every 5th frame (approx 6fps) to save space
+            if (frameCount % 5 !== 0) return;
+
+            const frame = {
+                t: Date.now() - sessionStartTime,
+                cam: {
+                    x: camera.position.x,
+                    y: camera.position.y,
+                    z: camera.position.z,
+                    rx: camera.rotation.x,
+                    ry: camera.rotation.y
+                },
+                chickens: chickens.map(c => c.toJSON()),
+                quarantine: quarantineChickens.map(c => c.toJSON()),
+                robot: {
+                    x: robot.position.x,
+                    z: robot.position.z,
+                    status: robot.status
+                }
+            };
+
+            if (window.recordedFrames) {
+                window.recordedFrames.push(frame);
+                // Limit buffer size - 20 minutes max @ 6fps = 7200 frames
+                if (window.recordedFrames.length > 7200) {
+                    window.recordedFrames.shift();
+                }
+            }
+        }
+
+        function animate(currentTime = 0) {
+            requestAnimationFrame(animate);
+
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+
+            if (sessionActive) {
+                captureFrame();
+
+                // Update camera movement
+                updateCameraMovement();
+
+                // Update all chickens
+                const allChickens = [...chickens, ...quarantineChickens];
+
+                chickens.forEach((chicken, i) => {
+                    chicken.update(deltaTime || 16, allChickens);
+
+                    if (chickenMeshes[i] && !chicken.isBeingCarried) {
+                        chickenMeshes[i].position.x = chicken.x;
+                        chickenMeshes[i].position.z = chicken.z;
+                        chickenMeshes[i].rotation.y = chicken.direction;
+
+                        // Update body color based on status
+                        const body = chickenMeshes[i].getObjectByName('body');
+                        if (body) {
+                            const colors = {
+                                critical: 0xff6666,
+                                elevated: 0xff9944,
+                                warning: 0xffdd44,
+                                healthy: 0xffffff
+                            };
+                            body.material.color.setHex(colors[chicken.status] || 0xffffff);
+                        }
+
+                        // Update AI view mesh
+                        if (aiChickenMeshes[i]) {
+                            aiChickenMeshes[i].position.copy(chickenMeshes[i].position);
+                            aiChickenMeshes[i].rotation.copy(chickenMeshes[i].rotation);
+                        }
+                    }
+                });
+
+                quarantineChickens.forEach((chicken, i) => {
+                    chicken.update(deltaTime || 16, allChickens);
+
+                    if (quarantineMeshes[i]) {
+                        quarantineMeshes[i].position.x = chicken.x;
+                        quarantineMeshes[i].position.z = chicken.z;
+                        quarantineMeshes[i].rotation.y = chicken.direction;
+
+                        if (aiQuarantineMeshes[i]) {
+                            aiQuarantineMeshes[i].position.copy(quarantineMeshes[i].position);
+                            aiQuarantineMeshes[i].rotation.copy(quarantineMeshes[i].rotation);
+                        }
+                    }
+                });
+
+                // Update robot
+                updateRobot(deltaTime || 16);
+
+                // Update stats every 30 frames
+                frameCount++;
+                if (frameCount % 30 === 0) {
+                    updateStats();
+                }
+
+                // Record frame every 2nd frame
+                if (frameCount % 2 === 0) {
+                    recordFrame();
+                }
+
+                // Update session manager
+                if (window.sessionManager && frameCount % 60 === 0) {
+                    sessionManager.updateStats(chickens, quarantineChickens, robot);
+                }
+
+                // Send WebSocket update every 500ms
+                if (frameCount % 30 === 0 && wsConnected) {
+                    sendWebSocketUpdate();
+                }
+            }
+
+            // Render main 3D view
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+
+            // Render AI view
+            if (aiRenderer && aiScene && aiCamera) {
+                aiRenderer.render(aiScene, aiCamera);
+                renderKeypoints(); // Overlay keypoints on top
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+
+        function simulateGap(gapMs) {
+            console.log(`⏩ Simulating catch-up for ${gapMs}ms gap`);
+            const stepSize = 1000 / 60; // 60fps steps
+            const maxSteps = 60 * 60 * 5; // Max 5 minutes of sim to prevent freeze
+
+            const steps = Math.min(Math.floor(gapMs / stepSize), maxSteps);
+            const dt = stepSize; // ms
+
+            for (let i = 0; i < steps; i++) {
+                // Update chickens
+                const allChickens = [...chickens, ...quarantineChickens];
+                allChickens.forEach(chicken => {
+                    chicken.update(dt, allChickens);
+                });
+
+                // Update robot to some extent (simplified)
+                if (robot.status !== 'idle') {
+                    // Just advance robot state slightly or reset if simpler
+                    // For now, we'll just let the robot resume where it was
+                }
+            }
+
+            // Generate some random alerts if gap was long
+            if (gapMs > 10000 && Math.random() < 0.3) {
+                const sickBird = chickens.find(c => c.riskScore > 0.6);
+                if (sickBird) {
+                    addAlert({
+                        type: 'warning',
+                        chickenId: sickBird.id,
+                        message: 'Health degraded during absence'
+                    });
+                }
+            }
+        }
+
+        function init() {
+            console.log('🔧 Initializing CHICKEN TWIN...');
+
+            // Initialize Three.js scenes
+            initThreeJS();
+            initAIView();
+
+            // Initialize event listeners
+            initEventListeners();
+
+            // Check for active session in sessionManager (persists across pages)
+            if (window.sessionManager && sessionManager.isSessionActive()) {
+                console.log('🔄 Found active session, auto-resuming...');
+
+                // Restore session state
+                currentSessionId = sessionManager.getSessionId();
+                sessionStartTime = new Date(sessionManager.getStartTime()).getTime();
+
+                // Start the session in resume mode
+                startSession(true);
+
+                addRobotLog('🔄 Session restored from navigation');
+                showNotification('Session Restored', 'Continuing active monitoring session', 'info');
+
+                // CATCH-UP LOGIC
+                const lastTimestamp = localStorage.getItem('chickenTwin_lastTimestamp');
+                if (lastTimestamp) {
+                    const elapsed = Date.now() - parseInt(lastTimestamp);
+                    if (elapsed > 0 && elapsed < 3600000) { // < 1 hour
+                        simulateGap(elapsed);
+                    }
+                }
+
+            } else {
+                // Also check legacy localStorage state
+                const savedState = loadSessionState();
+                if (savedState) {
+                    console.log('🔄 Found saved session state in localStorage');
+                }
+            }
+
+            // Start animation loop
+            animate();
+
+            // CRITICAL: Backup interval to update localStorage even when tab is hidden
+            // requestAnimationFrame pauses when tab is not visible, so we need setInterval
+            setInterval(() => {
+                if (sessionActive) {
+                    updateStats();
+                    updateSessionTimer();
+                    if (window.sessionManager) {
+                        sessionManager.updateStats(chickens, quarantineChickens, robot);
+                    }
+                }
+            }, 500);
+
+            console.log('✅ CHICKEN TWIN Ready!');
+            // showNotification('System Ready', 'Simulation initialized successfully', 'success');
+
+            // Save timestamp on unload for catch-up
+            window.addEventListener('beforeunload', () => {
+                if (sessionActive) {
+                    localStorage.setItem('chickenTwin_lastTimestamp', Date.now().toString());
+                }
+            });
+        }
+
+        // Start when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+        // Fallback Logic AND Feces Rendering extension
+
+        function simulateFallbackAI() {
+            // If AI server is down, this keeps the demo running
+
+            // 1. Find a sick bird
+            const sickBirds = chickens.filter(c => c.riskScore > 0.75 && !c.inQuarantine && !c.isBeingCarried && c !== robot.target);
+
+            if (sickBirds.length > 0 && robot.status === 'idle') {
+                const target = sickBirds[Math.floor(Math.random() * sickBirds.length)];
+                addRobotLog(`⚠️ (Fallback) High risk detected: Bird #${target.id}`);
+
+                // Trigger action
+                robot.target = target;
+                robot.status = 'moving_to_chicken';
+                addRobotLog(`🤖 Moving to target #${target.id}`);
+            }
+        }
+
+        // Add random infections during runtime
+        setInterval(() => {
+            if (!sessionActive) return;
+            // INCREASED SPEED: 50% chance every 2 seconds to infect a healthy bird
+            if (Math.random() < 0.5) {
+                const healthy = chickens.filter(c => !c.disease && !c.inQuarantine);
+                if (healthy.length > 0) {
+                    const victim = healthy[Math.floor(Math.random() * healthy.length)];
+                    victim.infectWithDisease();
+                    addAlert({
+                        type: 'warning',
+                        chickenId: victim.id,
+                        message: `New infection detected: ${victim.disease.name}`
+                    });
+                }
+            }
+        }, 2000);
+
+        setInterval(() => {
+            if (sessionActive && robot.status === 'idle') {
+                simulateFallbackAI();
+            }
+        }, 1000); // Check fallback faster (every 1s)
+
+    </script>
+</body>
+
+</html>
