@@ -289,6 +289,37 @@
             }
         });
     </script>
+
+    <!-- Made by Instaflect AI Popup -->
+    <div class="brand-modal" id="brandModal">
+        <div class="brand-card">
+            <div class="brand-logo-large">🚀</div>
+            <div class="brand-title">Proudly Powered By</div>
+            <div class="brand-name">Instaflect AI</div>
+            <p style="margin-bottom: 24px; color: var(--gray-400); font-size: 0.95rem;">
+                Intelligent Automation & Precision Poultry Robotics.
+            </p>
+            <button class="brand-close" onclick="closeBrandModal()">Continue to Chicken Twin</button>
+        </div>
+    </div>
+
+    <script>
+        function closeBrandModal() {
+            const modal = document.getElementById('brandModal');
+            modal.classList.remove('active');
+            sessionStorage.setItem('instaflect_shown', 'true');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Only show if not shown this session
+            if (!sessionStorage.getItem('instaflect_shown')) {
+                setTimeout(() => {
+                    const modal = document.getElementById('brandModal');
+                    if (modal) modal.classList.add('active');
+                }, 1000);
+            }
+        });
+    </script>
 </body>
 
 </html>
